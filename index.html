@@ -1,0 +1,420 @@
+<!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Nhà trọ cao cấp – 3D, dự toán, quản lý</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* Bố cục: cột thông số bên trái, khung 3D bên phải; bảng khối lượng và ra tiền nhanh nằm dưới. Nền xanh đêm, nhấn vàng. */
+:root{--bg:#0b1630;--p:#101e3e;--g:#d4a24c;--t:#e6ebf5;--m:#8fa0c0;--l:#26365e;--o:#e0a040;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--t);font:13px/1.5 'Space Mono',ui-monospace,monospace}
+h1,h2,h3{font-family:'Cormorant Garamond',Georgia,serif;font-weight:500;margin:0 0 8px;text-wrap:balance}
+h1{font-size:24px;letter-spacing:.12em;color:var(--g)}h2{font-size:26px}
+h3{font:400 11px 'Space Mono',monospace;letter-spacing:.18em;text-transform:uppercase;color:var(--g);margin:16px 0 8px}
+header{padding:14px 20px;border-bottom:1px solid var(--g);display:flex;gap:20px;align-items:center;flex-wrap:wrap}
+nav{display:flex;flex-wrap:wrap}
+nav button{background:none;border:0;color:var(--m);font:inherit;padding:6px 10px;cursor:pointer;border-bottom:2px solid transparent}
+nav button.on{color:var(--g);border-color:var(--g)}
+main{padding:16px 20px;max-width:1400px;margin:auto}
+section.tab{display:none}section.tab.on{display:block}
+input,select{background:var(--p);border:1px solid var(--l);color:var(--t);padding:5px 6px;font:inherit;width:100%;min-width:60px}
+input[type=checkbox]{width:auto;min-width:0;accent-color:var(--g)}
+input[type=range]{padding:0;accent-color:var(--g)}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--g);outline-offset:1px}
+label{display:block;color:var(--m);font-size:11px}
+.b{background:none;border:1px solid var(--l);color:var(--t);padding:6px 10px;font:inherit;cursor:pointer;margin:0 6px 6px 0;letter-spacing:.08em}
+.b:hover{border-color:var(--g);color:var(--g)}.b.on{border-color:var(--g);color:var(--g)}
+.g{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;margin:10px 0}
+.w{overflow-x:auto}
+table{width:100%;border-collapse:collapse;margin:8px 0}
+th,td{padding:3px 6px;border-bottom:1px solid var(--l);text-align:left}
+th{color:var(--g);font-weight:400;white-space:nowrap;letter-spacing:.08em}
+td.r,th.r{text-align:right;font-variant-numeric:tabular-nums}
+td.u{color:var(--m)}td.tot{color:var(--o)}
+tr.s td{color:var(--g);font-size:14px}
+.note{color:var(--o);font-size:12px;max-width:95ch}
+.lead{color:var(--m);max-width:80ch;margin:0 0 14px;font-size:14px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;margin:12px 0}
+.card{border:1px solid var(--l);padding:10px;background:var(--p)}
+.card b{display:block;font:500 22px 'Cormorant Garamond',serif;color:var(--g)}
+.td label{color:var(--t);font-size:13px;margin:7px 0}.td input{margin-right:8px}
+/* phòng 3D */
+.studio{display:grid;grid-template-columns:300px minmax(0,1fr);gap:20px;align-items:start}
+.pg{display:grid;grid-template-columns:1fr 1fr;gap:10px 12px}
+.pg label{font-size:10px;letter-spacing:.14em;text-transform:uppercase}
+.pg input{font-size:15px;padding:8px}
+.ck{display:flex;align-items:center;gap:8px;color:var(--t);font-size:13px;margin:8px 0;letter-spacing:0;text-transform:none}
+.row{display:flex;flex-wrap:wrap;gap:6px 14px}
+.lg{display:grid;grid-template-columns:1fr 1fr;gap:6px 10px}
+.lg label{display:flex;align-items:center;gap:6px;color:var(--t);font-size:11px;line-height:1.2;letter-spacing:.04em}
+.sw{width:12px;height:12px;border-radius:2px;flex:none}
+.bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
+.bar .sp{margin-left:auto;display:flex;gap:8px;align-items:center;color:var(--m);font-size:11px;letter-spacing:.12em;text-transform:uppercase}
+.bar select{width:auto}
+#stage{position:relative;height:66vh;min-height:500px;border:1px solid var(--l);background:#0a1328}
+#stage canvas{display:block;width:100%;height:100%;touch-action:none}
+#fail{position:absolute;inset:0;display:none;align-items:center;justify-content:center;padding:24px;text-align:center;color:var(--m)}
+.info{color:var(--m);font-size:11px;letter-spacing:.06em;margin:8px 0 0}
+.qh{display:flex;justify-content:space-between;align-items:end;flex-wrap:wrap;gap:8px;margin-top:26px}
+.two{display:grid;grid-template-columns:minmax(220px,300px) minmax(0,1fr);gap:28px;margin-top:20px}
+.hl{display:grid;gap:8px}.hl label{display:grid;grid-template-columns:1fr 90px;align-items:center;gap:8px;color:var(--t);font-size:12px}
+.qu{margin:0;padding:0;list-style:none;font-size:12px;color:var(--t)}.qu li{padding-left:14px;position:relative}.qu li::before{content:"•";position:absolute;left:0;color:var(--g)}
+.qt{font-size:10px;letter-spacing:.18em;color:var(--g);text-transform:uppercase;margin:22px 0 6px}
+@media(max-width:900px){.studio,.two{grid-template-columns:1fr}#stage{height:56vh;min-height:360px}}
+</style></head><body>
+<header><h1>NHÀ TRỌ CAO CẤP</h1><nav id="nav"><button class="on" data-t="sd">Phối cảnh 3D &amp; dự toán</button><button data-t="sp">Phòng &amp; khách thuê</button><button data-t="st">Thu chi</button><button data-t="sk">Lợi nhuận &amp; thuế</button><button data-t="sb">Bảo trì &amp; thủ tục</button><button data-t="sg">Google &amp; nhắc việc</button></nav></header>
+<main>
+<section class="tab on" id="sd">
+<p class="lead">Nhập thông số, mô hình 3D dựng lại ngay: lưới phòng, số ô nhà xe, chiều cao, sân trước, xe máy dưới cầu thang. Bảng khối lượng và dự toán bên dưới tính theo cùng số liệu.</p>
+<div class="studio">
+<aside>
+<h3 style="margin-top:0">Thông số</h3>
+<div class="pg" id="pg"></div>
+<label class="ck"><input type="checkbox" id="p-gac">Có gác lửng và thang sắt</label>
+<label class="ck"><input type="checkbox" id="p-bep">Bếp riêng trong từng phòng</label>
+<div class="info" id="der"></div>
+<h3>Tầng</h3>
+<div class="row"><label class="ck"><input type="checkbox" id="lv-tret" checked>Trệt</label><label class="ck"><input type="checkbox" id="lv-lau" checked>Lầu</label><label class="ck"><input type="checkbox" id="lv-mai" checked>Mái</label></div>
+<h3>Cấu kiện</h3>
+<div class="lg" id="lg"></div>
+<h3>Độ hiện tường (%)</h3>
+<input type="range" id="wo" min="5" max="100" value="100" aria-label="Độ hiện tường">
+<p class="info"><button class="b" id="reset" style="margin-top:10px">Về thông số v8</button></p>
+</aside>
+<div>
+<div class="bar">
+<button class="b on" data-v="persp">Tổng quan</button><button class="b" data-v="top">Từ trên</button><button class="b" data-v="front">Mặt tiền</button><button class="b" data-v="side">Lối hông</button>
+<span class="sp">Mặt bằng 2D <select id="plan"><option value="3d">3D</option><option value="tret">Trệt</option><option value="lau">Lầu</option></select></span>
+</div>
+<div id="stage"><div id="fail">Trình duyệt không hiển thị được khung 3D (WebGL bị tắt). Hãy mở bằng Chrome, Safari hoặc Edge bản mới.</div></div>
+<p class="info" id="stat"></p>
+</div>
+</div>
+
+<div class="qh"><h2>Bảng khối lượng</h2><div><button class="b" id="csv">Xuất CSV</button><button class="b" id="png">Xuất ảnh PNG</button><button class="b" id="dxf">Xuất DXF</button></div></div>
+<div class="w"><table id="qt"></table></div>
+<div class="qt">Quy ước tính</div><ul class="qu" id="qu"></ul>
+<p class="info">DXF mở được bằng AutoCAD: mặt bằng tầng đang chọn ở ô “Mặt bằng 2D” (mặc định Trệt), đơn vị mm, layer TUONG / TRUC / DIM.</p>
+<div class="two">
+<div><h2>Hàm lượng thép</h2><p class="info">kg/m³ bê tông, tham khảo, sửa được.</p><div class="hl" id="steel"></div></div>
+<div><h2>Ra tiền nhanh</h2><p class="note">Đơn giá chỉ để ước tính: giá giả định, sửa theo báo giá của bạn. Chưa gồm đào đất, ốp lát, thiết bị vệ sinh. Không thay thế bóc tách bản vẽ.</p><div class="w"><table id="qk"></table></div></div>
+</div>
+</section>
+
+<section class="tab" id="sp"><h2>Phòng &amp; khách thuê</h2><p class="note">Số phòng trong mô hình lấy từ thông số ở tab đầu. Điền chỉ số điện nước mới rồi bấm “Chốt hóa đơn tháng” để ghi thu vào sổ thu chi.</p><p class="info" id="rmnote"></p>
+<div class="g"><label>Đơn giá điện (đ/số)<input id="pe" type="number" value="3500"></label><label>Đơn giá nước (đ/m³)<input id="pw" type="number" value="15000"></label></div>
+<button class="b" id="bill">Chốt hóa đơn tháng</button><button class="b" id="addroom">Thêm phòng</button><div class="cards" id="rs"></div><div class="w"><table id="rm"></table></div></section>
+<section class="tab" id="st"><h2>Sổ thu chi</h2><button class="b" id="addtc">Thêm khoản</button><div class="w"><table id="tc"></table></div><h2 style="margin-top:14px">Tổng hợp theo tháng</h2><div class="w"><table id="tm"></table></div></section>
+<section class="tab" id="sk"><h2>Khai thác, lợi nhuận &amp; thuế</h2><p class="note">Mức thuế chỉ là giả định, hãy kiểm tra quy định hiện hành về thuế cho thuê nhà và hộ kinh doanh. Doanh thu dự kiến lấy từ giá thuê các phòng ở tab Phòng.</p><div class="g" id="inv"></div><div class="cards" id="out"></div></section>
+<section class="tab" id="sb"><h2>Bảo trì định kỳ</h2><button class="b" id="addbt">Thêm việc</button><div class="w"><table id="bt"></table></div><h2 style="margin-top:14px">Thủ tục cần chuẩn bị</h2><p class="note">Danh sách gợi ý, cần đối chiếu với địa phương.</p><div class="td" id="td"></div></section>
+<section class="tab" id="sg"><h2>Sao lưu Google &amp; nhắc việc</h2>
+<p class="note">Trang này chạy trong trình duyệt nên chưa tự đăng nhập Google. Dữ liệu được xuất đúng cột của Google Sheet “Theo dõi 2 nhà trọ cao cấp” để dán vào, kèm file nhắc việc nhập được vào Google Calendar.</p>
+<div class="row" style="margin:12px 0"><a class="b" style="text-decoration:none" target="_blank" rel="noopener" href="https://docs.google.com/spreadsheets/d/1K-t1dW9aSG_buNL9FSGYpissCmKEiyDYAOUBPPXdOso/edit">Mở Google Sheet</a><a class="b" style="text-decoration:none" target="_blank" rel="noopener" href="https://docs.google.com/document/d/1ET6ERnyQgApdtYkCHj8ThA2XyvMjWkPx_J8erK3MMZo/edit">Mở Google Doc</a><a class="b" style="text-decoration:none" target="_blank" rel="noopener" href="https://calendar.google.com/calendar/u/0/r">Mở Google Calendar</a></div>
+<div class="g"><label>Tên nhà (cột Nhà trong Sheet)<input id="nha" type="text"></label><label>Nhắc hợp đồng hết hạn trước (ngày)<input id="r-hd" type="number"></label><label>Nhắc bảo trì trước (ngày)<input id="r-bt" type="number"></label></div>
+<h3>Sao lưu vào Sheet</h3>
+<button class="b" data-cp="rm">Sao chép bảng Phòng</button><button class="b" data-cp="tc">Sao chép bảng Thu chi</button><button class="b" data-cp="bt">Sao chép bảng Bảo trì</button>
+<p class="info" id="cpmsg">Bấm một nút, mở tab tương ứng trong Sheet, chọn ô A5 (Phòng), A3 (Thu chi) hoặc A5 (Bảo trì) rồi dán. Bỏ dòng mẫu cũ trước khi dán.</p>
+<h3>Bản sao lưu trên máy</h3>
+<button class="b" id="bk">Tải bản sao lưu (.json)</button><label class="b" style="display:inline-block;color:var(--t)">Khôi phục từ file<input id="rs" type="file" accept=".json,application/json" style="display:none"></label>
+<h3>Nhắc việc</h3>
+<button class="b" id="ics">Tải file nhắc việc (.ics)</button>
+<p class="info">Trong Google Calendar: Cài đặt, Nhập và xuất, chọn file .ics. Mỗi sự kiện có thông báo trước theo số ngày ở trên.</p>
+<div class="w"><table id="rmd"></table></div></section>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+const $=i=>document.getElementById(i),F=x=>Math.round(x).toLocaleString('vi-VN'),N=(x,d=1)=>(+x).toLocaleString('vi-VN',{maximumFractionDigits:d,minimumFractionDigits:d});
+const st={get(k,d){try{return JSON.parse(localStorage.getItem(k))??d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
+
+/* ================= THÔNG SỐ ================= */
+const P0={D:6,SH:1.2,W:3.2,N:5,G:1,FL:0.6,HF:4.5,HG:2.35,FR:3,TT:150,XE:3,gac:true,bep:false};
+const FD=[['D','Rộng đất (m)',5.2,9,.1],['SH','Lối hông (m)',.9,2,.1],['W','Rộng ô (m)',3,4.5,.1],['N','Số ô lưới',2,8,1],['G','Ô nhà xe trệt',0,2,1],['FL','Cao nền trệt',0,1.2,.05],['HF','Cao tầng (m)',3.6,5,.1],['HG','Cao gác (m)',2,3,.05],['FR','Sân trước (m)',2.5,6,.1],['TT','Vách xây (mm)',100,220,10],['XE','Xe dưới thang',0,3,1]];
+let P=Object.assign({},P0,st.get('nt3_p',{}));
+function norm(){FD.forEach(f=>{P[f[0]]=clamp(+P[f[0]]||P0[f[0]],f[2],f[3])});P.N=Math.round(P.N);P.G=Math.round(P.G);P.XE=Math.round(P.XE);P.G=Math.min(P.G,P.N-1);P.HG=Math.min(P.HG,P.HF-1.8);P.gac=!!P.gac;P.bep=!!P.bep}
+norm();
+const rooms$=()=>{const NT=P.N-P.G;return{NT,NL:P.N,R:NT+P.N}};
+$('pg').innerHTML=FD.map(f=>`<label>${f[1]}<input id="f-${f[0]}" type="number" min="${f[2]}" max="${f[3]}" step="${f[4]}" value="${P[f[0]]}"></label>`).join('');
+$('p-gac').checked=P.gac;$('p-bep').checked=P.bep;
+function der(){const r=rooms$(),L=P.N*P.W;$('der').textContent=`Dài nhà ${N(L,1)} m · sâu phòng ${N(P.D-P.SH,1)} m · ${r.R} phòng (${r.NT} trệt + ${r.NL} lầu)`}
+let tmr=0;function sched(){clearTimeout(tmr);tmr=setTimeout(()=>{st.set('nt3_p',P);der();build();renderQty();ensureRooms()},140)}
+FD.forEach(f=>{const el=$('f-'+f[0]);el.addEventListener('input',()=>{const v=parseFloat(el.value);if(isNaN(v))return;P[f[0]]=v;norm();sched()});el.addEventListener('change',()=>{norm();el.value=P[f[0]]})});
+$('p-gac').onchange=e=>{P.gac=e.target.checked;sched()};
+$('p-bep').onchange=e=>{P.bep=e.target.checked;sched()};
+$('reset').onclick=()=>{P=Object.assign({},P0);FD.forEach(f=>$('f-'+f[0]).value=P[f[0]]);$('p-gac').checked=true;$('p-bep').checked=false;sched()};
+
+/* ================= 3D ================= */
+const host=$('stage');let renderer,scene,camera,controls,world,UNIT;
+const MAT=(c,o)=>new THREE.MeshLambertMaterial(Object.assign({color:c},o||{}));
+const M={wall:MAT(0xf1eee7),plinth:MAT(0xcbc5b8),slab:MAT(0xd9d5cc),roof:MAT(0xaab4bf),wood:MAT(0xc7a47a),metal:MAT(0x2d3139),frame:MAT(0xe0852b),stair:MAT(0xd8d4cb),dark:MAT(0x3a3f47),bike:MAT(0x14161a),white:MAT(0xffffff),rail:MAT(0x8a93a0),door:MAT(0xd6342c,{transparent:true,opacity:.6}),yard:MAT(0x56627f),road:MAT(0x2a3247),ground:MAT(0x16213d),cap:MAT(0x2f8f4e)};
+const CATS=[['tuong','Tường','#f1eee7'],['san','Sàn, mái','#d9d5cc'],['gac','Gác lửng','#c7a47a'],['thang','Thang sắt gác','#2d3139'],['wc','WC','#ffffff'],['bep','Bếp (khối đen)','#14161a'],['phoi','Khung phơi đồ','#e0852b'],['ct','Cầu thang chữ L','#d8d4cb'],['lancan','Lan can','#8a93a0'],['cua','Cửa','#d6342c'],['xe','Xe máy','#14161a'],['nhaxe','Nhà xe, cột','#cbc5b8'],['dat','Sân, đường, nền','#56627f'],['nhan','Nhãn, cao độ','#d4a24c']];
+const LV={tret:true,lau:true,mai:true,dat:true},CV={nhan:false};
+$('lg').innerHTML=CATS.map(c=>`<label><input type="checkbox" data-c="${c[0]}" ${CV[c[0]]===false?'':'checked'}><span class="sw" style="background:${c[2]};border:1px solid var(--l)"></span>${c[1]}</label>`).join('');
+$('lg').onchange=e=>{CV[e.target.dataset.c]=e.target.checked;applyVis()};
+['tret','lau','mai'].forEach(k=>$('lv-'+k).onchange=e=>{LV[k]=e.target.checked;applyVis()});
+$('wo').oninput=e=>{const v=+e.target.value;M.wall.transparent=v<100;M.wall.opacity=v/100;M.wall.depthWrite=v>=100;M.wall.needsUpdate=true};
+let items=[],plan=[],bounds={cx:9.5,cz:3,s:1};
+function reg(o,lv,cat){world.add(o);items.push({o,lv,cat});return o}
+function B(lv,cat,x0,x1,y0,y1,z0,z1,m){const dx=x1-x0,dy=y1-y0,dz=z1-z0;if(dx<.001||dy<.001||dz<.001)return null;const o=new THREE.Mesh(UNIT,m);o.scale.set(dx,dy,dz);o.position.set((x0+x1)/2,(y0+y1)/2,(z0+z1)/2);o.castShadow=o.receiveShadow=true;if(cat==='tuong'&&dy>1)plan.push({lv,x0,x1,z0,z1});return reg(o,lv,cat)}
+function RB(lv,cat,px,py,pz,sx,sy,sz,rx,ry,rz,m){const o=new THREE.Mesh(UNIT,m);o.scale.set(sx,sy,sz);o.position.set(px,py,pz);o.rotation.set(rx,ry,rz);o.castShadow=o.receiveShadow=true;return reg(o,lv,cat)}
+function clearWorld(){items.forEach(i=>{world.remove(i.o);if(i.o.geometry&&i.o.geometry!==UNIT)i.o.geometry.dispose();if(i.o.material&&i.o.material.map){i.o.material.map.dispose();i.o.material.dispose()}});items=[];plan=[]}
+function applyVis(){items.forEach(i=>{i.o.visible=LV[i.lv]!==false&&CV[i.cat]!==false})}
+const RISER=.185,TREAD=.24,SW=.9,FRAME_D=.55;
+function stairGeom(){const lauY=P.FL+P.HF,nR=Math.floor(lauY/RISER+1e-9),N1=Math.round(nR*2/3),N2=nR-N1,BASE=lauY-nR*RISER,LAND_Y=BASE+N1*RISER;
+ const Zf=P.D-.6,Zt=Zf-(N1-1)*TREAD,s1=Math.hypot(N1*TREAD,N1*RISER),s2=Math.hypot(N2*TREAD,N2*RISER);
+ const vol=SW*.12*(s1+s2)+nR*.5*TREAD*RISER*SW+1.1*Math.max(Zt,0)*.12,cop=(s1+s2)*1.5+1.1*Math.max(Zt,0);
+ return{lauY,nR,N1,N2,BASE,LAND_Y,Zf,Zt,s1,s2,vol,cop}}
+function label(text,x,y,z,h,cat){const c=document.createElement('canvas'),ctx=c.getContext('2d'),font='700 34px "Space Mono",monospace';ctx.font=font;const w=Math.ceil(ctx.measureText(text).width)+30;c.width=w;c.height=60;ctx.font=font;ctx.fillStyle='rgba(8,14,30,.82)';ctx.fillRect(0,0,w,60);ctx.fillStyle='#f2f5fb';ctx.textBaseline='middle';ctx.fillText(text,15,32);
+ const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),depthTest:false,transparent:true}));sp.scale.set(h*w/60,h,1);sp.position.set(x,y,z);sp.renderOrder=10;return reg(sp,'dat',cat||'nhan')}
+const sgn=v=>(v>=0?'+':'−')+N(Math.abs(v),3);
+function build(){
+ if(!renderer)return;clearWorld();
+ const{D,SH,W,FL,HF,HG,FR,XE}=P,T=P.TT/1000,Dr=D-SH,Nn=P.N,Gg=P.G,L=Nn*W,NT=Nn-Gg,gx0=NT*W,lauY=FL+HF,S=stairGeom();
+ /* đất, đường, sân */
+ const gnd=new THREE.Mesh(new THREE.PlaneGeometry(160,160),M.ground);gnd.rotation.x=-Math.PI/2;gnd.position.y=-.02;gnd.receiveShadow=true;reg(gnd,'dat','dat');
+ const grid=new THREE.GridHelper(160,160,0x2a3a66,0x1c2a4e);grid.position.y=.0;reg(grid,'dat','dat');
+ B('dat','dat',L+FR+.6,L+FR+11,-.02,.02,-40,46,M.road);
+ B('dat','dat',L,L+FR,0,.03,0,D,M.yard);
+ B('dat','dat',0,L,0,.03,0,SH,M.yard);
+ /* một phòng */
+ function room(lv,x0,fy,first){
+  const xi0=x0+T/2,xi1=x0+W-T/2,zi0=SH+T/2,zi1=D-T/2,top=fy+HF,gy=fy+HG,nz0=SH-T/2,nz1=SH+T/2;
+  B(lv,'tuong',x0+W-T/2,x0+W+T/2,fy,top,nz0,D+T/2,M.wall);
+  if(first)B(lv,'tuong',x0-T/2,x0+T/2,fy,top,nz0,D+T/2,M.wall);
+  B(lv,'tuong',x0-T/2,x0+W+T/2,fy,top,D-T/2,D+T/2,M.wall);
+  const dx1=xi0+.8,gx=xi1-1.45,zl=zi1-.8,xs=gx-.8,ox0=gx+.05,ox1=xi1-.05;
+  B(lv,'tuong',xi0,dx1,fy+2.1,top,nz0,nz1,M.wall);
+  B(lv,'tuong',dx1,ox0,fy,top,nz0,nz1,M.wall);
+  const wda=xi1-1,wdb=xi1-.3;
+  B(lv,'tuong',ox0,wda,fy,gy,nz0,nz1,M.wall);B(lv,'tuong',wdb,ox1,fy,gy,nz0,nz1,M.wall);
+  B(lv,'tuong',wda,wdb,fy+2.05,gy,nz0,nz1,M.wall);B(lv,'cua',wda,wdb,fy,fy+2.05,nz0-.01,nz0+.03,M.door);
+  B(lv,'tuong',ox0,ox1,gy+2,top,nz0,nz1,M.wall);
+  if(!P.gac)B(lv,'tuong',ox0,ox1,gy,gy+2,nz0,nz1,M.wall);
+  B(lv,'tuong',ox1,x0+W+T/2,fy,top,nz0,nz1,M.wall);
+  /* WC và bếp */
+  const wx0=xi1-1.2,wz1=zi0+1.5,wh=fy+2.25;
+  B(lv,'tuong',wx0-T,xi1,fy,wh,wz1,wz1+T,M.wall);B(lv,'tuong',wx0-T,wx0,fy,wh,zi0,wz1+T,M.wall);
+  B(lv,'wc',xi1-.65,xi1-.25,fy,fy+.4,zi0+.9,zi0+1.4,M.white);
+  if(P.bep)B(lv,'bep',xi0,xi0+.6,fy,fy+.85,zi1-1.8,zi1,M.bike);
+  if(!P.gac)return;
+  /* gác lửng 1,45 m, thang sắt hở 12 bậc, khung phơi */
+  B(lv,'gac',gx,xi1,gy-.1,gy,zi0,zl,M.wood);
+  const ex=xi1-.75;
+  B(lv,'lancan',gx,gx+.04,gy+.95,gy+1,zi0+.1,zl,M.metal);B(lv,'lancan',gx,gx+.04,gy+.45,gy+.48,zi0+.1,zl,M.metal);
+  for(let q=zi0+.1;q<zl;q+=.5)B(lv,'lancan',gx,gx+.04,gy,gy+1,q,q+.04,M.metal);
+  B(lv,'lancan',gx,ex,gy+.95,gy+1,zl-.04,zl,M.metal);B(lv,'lancan',gx,ex,gy+.45,gy+.48,zl-.04,zl,M.metal);B(lv,'lancan',ex-.04,ex,gy,gy+1,zl-.04,zl,M.metal);
+  const rs=HG/12;
+  for(let k=0;k<11;k++){const yt=fy+rs*(k+1),xk=xs+.2*k;B(lv,'thang',xk,Math.min(xk+.26,xi1),yt-.04,yt,zl,zi1,M.metal);if(k%2===0)B(lv,'thang',xk+.11,xk+.15,yt,yt+.83,zl,zl+.04,M.metal)}
+  const dx=2,dy=10*rs,Lh=Math.hypot(dx,dy)+.3,ang=Math.atan2(dy,dx);
+  [[zl+.02,0,.12],[zi1-.02,0,.12],[zl+.02,.95,.04],[zl+.02,.5,.03]].forEach(a=>RB(lv,'thang',xs+.13+dx/2,fy+.076+a[1]+dy/2,a[0],Lh,a[2],.04,0,0,ang,M.metal));
+  const fx0=gx,fx1=xi1,fz1=SH-T/2,fz0=fz1-FRAME_D;
+  B(lv,'phoi',fx0,fx1,gy-.05,gy,fz0,fz1,M.frame);B(lv,'phoi',fx0,fx1,gy+.95,gy+1,fz0,fz0+.04,M.frame);
+  B(lv,'phoi',fx0,fx0+.04,gy,gy+1,fz0,fz1,M.frame);B(lv,'phoi',fx1-.04,fx1,gy,gy+1,fz0,fz1,M.frame);
+  B(lv,'phoi',fx0,fx0+.04,gy,gy+1.9,fz0,fz0+.04,M.frame);B(lv,'phoi',fx1-.04,fx1,gy,gy+1.9,fz0,fz0+.04,M.frame);B(lv,'phoi',fx0,fx1,gy+1.86,gy+1.9,fz0,fz0+.04,M.frame)}
+ B('tret','san',-T/2,NT*W+T/2,0,FL,SH-T/2,D+T/2,M.plinth);
+ /* nhà xe mở ở mặt tiền (khối đen xe máy đã dời xuống dưới cầu thang) */
+ if(Gg>0){B('tret','nhaxe',gx0,L+T/2,0,.03,SH-T/2,D+T/2,M.yard);B('tret','tuong',gx0,L+T/2,0,lauY-.15,D-T/2,D+T/2,M.wall);
+  for(let i=0;i<=Gg;i++)B('tret','nhaxe',gx0+i*W-.12,gx0+i*W+.12,0,lauY-.15,SH-.12,SH+.12,M.wall);
+  B('tret','nhaxe',L-.12,L+.12,0,lauY-.15,D-.22,D+.02,M.wall)}
+ for(let i=0;i<NT;i++)room('tret',W*i,FL,i===0);
+ for(let j=0;j<Nn;j++)room('lau',W*j,lauY,j===0);
+ /* sàn lầu, hành lang hông, lan can */
+ B('lau','san',-T/2,L+T/2,lauY-.15,lauY,SH-T/2,D+T/2,M.slab);B('lau','san',0,L+.2,lauY-.15,lauY,0,SH-T/2,M.slab);
+ B('lau','lancan',0,L+.2,lauY+.95,lauY+1,0,.05,M.rail);for(let p=0;p<=L;p+=2)B('lau','lancan',p,p+.05,lauY,lauY+1,0,.05,M.rail);B('lau','lancan',L+.15,L+.2,lauY,lauY+1,0,.05,M.rail);
+ B('mai','san',-.35,L+.35,lauY+HF,lauY+HF+.15,SH-.3,D+.35,M.roof);
+ /* cầu thang chữ L */
+ const{N1,N2,BASE,LAND_Y,Zf,Zt,nR}=S,XF=L+FR-1,XL=XF-.1,WX=L+FR;
+ function flight(n){const s=new THREE.Shape();s.moveTo(0,-.22);s.lineTo(0,RISER);for(let k=1;k<n;k++){s.lineTo(k*TREAD,k*RISER);s.lineTo(k*TREAD,(k+1)*RISER)}s.lineTo((n-1)*TREAD,n*RISER-.22);const m=new THREE.Mesh(new THREE.ExtrudeGeometry(s,{depth:SW,bevelEnabled:false}),M.stair);m.castShadow=m.receiveShadow=true;return m}
+ const f1=flight(N1);f1.rotation.y=Math.PI/2;f1.position.set(XF,BASE,Zf);reg(f1,'dat','ct');
+ const f2=flight(N2);f2.rotation.y=Math.PI;f2.position.set(XL,LAND_Y,SW);reg(f2,'dat','ct');
+ B('dat','ct',XL,WX,LAND_Y-.22,LAND_Y,0,Zt,M.stair);
+ B('dat','ct',WX-.08,WX,0,LAND_Y-.22,0,.08,M.metal);B('dat','ct',WX-.08,WX,0,LAND_Y-.22,Zt-.08,Zt,M.metal);
+ B('dat','ct',XL,XL+.08,0,LAND_Y-.22,0,.08,M.metal);B('dat','ct',XL,XL+.08,0,LAND_Y-.22,Zt-.08,Zt,M.metal);
+ B('dat','cua',WX-.03,WX+.03,0,2.2,D-1,D,M.door);
+ const bar=(x0,y0,x1,y1,z)=>{const dx=x1-x0,dy=y1-y0;RB('dat','lancan',(x0+x1)/2,(y0+y1)/2+.9,z,Math.hypot(dx,dy),.05,.05,0,0,Math.atan2(dy,dx),M.rail)};
+ const barZ=(z0,y0,z1,y1,x)=>{const dz=z1-z0,dy=y1-y0;RB('dat','lancan',x,(y0+y1)/2+.9,(z0+z1)/2,.05,.05,Math.hypot(dz,dy),-Math.atan2(dy,dz),0,0,M.rail)};
+ barZ(Zf,BASE+RISER,Zt,LAND_Y,XF+.02);bar(XL,LAND_Y+RISER,XL-(N2-1)*TREAD,lauY,.025);
+ for(let q=0;q<N1;q+=4){const zp=Zf-q*TREAD;B('dat','lancan',XF,XF+.04,BASE+(q+1)*RISER,BASE+(q+1)*RISER+.9,zp-.04,zp,M.rail)}
+ for(let r=0;r<N2;r+=4)B('dat','lancan',XL-r*TREAD-.04,XL-r*TREAD,LAND_Y+(r+1)*RISER,LAND_Y+(r+1)*RISER+.9,0,.04,M.rail);
+ B('dat','lancan',XL,WX,LAND_Y+.95,LAND_Y+1,0,.04,M.rail);B('dat','lancan',WX-.04,WX,LAND_Y+.95,LAND_Y+1,0,Zt,M.rail);
+ B('dat','lancan',WX-.1,WX,LAND_Y+.95,LAND_Y+1,Zt-.04,Zt,M.rail);B('dat','lancan',XL,XF,LAND_Y+.95,LAND_Y+1,Zt-.04,Zt,M.rail);
+ B('dat','lancan',WX-.04,WX,LAND_Y,LAND_Y+1,0,.04,M.rail);B('dat','lancan',WX-.04,WX,LAND_Y,LAND_Y+1,Zt-.04,Zt,M.rail);
+ /* xe máy: các khối đen đặt dưới cầu thang (3 chỗ) */
+ const slots=[{x0:XF+.15,x1:XF+.75,z0:Zf-2.45,z1:Zf-.95,ax:'z'},{x0:XF+.15,x1:XF+.75,z0:Zf-3.95,z1:Zf-2.45,ax:'z'},{x0:XL-1.55,x1:XL-.05,z0:.25,z1:.85,ax:'x'}];
+ let placed=0;slots.forEach((s,i)=>{if(i>=XE||s.z0<0)return;placed++;
+  B('dat','xe',s.x0,s.x1,.03,.55,s.z0,s.z1,M.bike);
+  if(s.ax==='z')B('dat','xe',s.x0+.05,s.x1-.05,.55,.9,s.z0+.1,s.z0+.8,M.frame);else B('dat','xe',s.x0+.1,s.x0+.8,.55,.9,s.z0+.05,s.z1-.05,M.frame)});
+ if(!P.bep){B('dat','bep',XL+.1,WX-.1,.03,.85,.15,.75,M.bike);B('dat','bep',XL+.1,WX-.1,.85,.88,.15,.75,M.frame)}
+ /* nhãn */
+ label('Đường',L+FR+3,.8,D/2,.9,'nhan');label(`Sân trước ${N(D,1)} × ${N(FR,1)} m`,L+FR/2-.2,.9,D/2+.2,.7,'nhan');
+ label(`Cầu thang chữ L: ${N1} + ${N2} bậc`,XL-1.2,lauY+1.2,.9,.7,'nhan');label('Chiếu nghỉ',XF+.5,LAND_Y+.5,.7,.5,'nhan');label('Cửa vào thang',WX+.9,2.9,D-.5,.6,'nhan');
+ if(!P.bep)label('Bếp (dưới thang)',XL+.5,1.3,.45,.45,'nhan');
+ if(placed)label('Xe máy dưới thang',XF+.4,1.9,Zf-2.4,.5,'nhan');
+ label(`Lối đi hông ${N(SH,1)} m`,L*.44,.9,.6,.6,'nhan');
+ const ar=N((W-T)*(Dr-T),1);
+ for(let i=0;i<NT;i++)label(`P${i+1} · ${ar} m²`,W*i+W/2,FL+.4,SH+Dr/2,.5,'nhan');
+ if(Gg)label('Nhà xe',gx0+Gg*W/2,FL+.7,SH+Dr/2,.5,'nhan');
+ for(let j=0;j<Nn;j++)label(`P${NT+j+1} · ${ar} m²`,W*j+W/2,lauY+.4,SH+Dr/2,.5,'nhan');
+ label(`Trệt ${sgn(FL)}`,-1.7,FL+.2,D/2,.5,'nhan');if(P.gac)label(`Gác ${sgn(FL+HG)}`,-1.7,FL+HG+.2,D/2,.5,'nhan');label(`Lầu ${sgn(lauY)}`,-1.7,lauY+.2,D/2,.5,'nhan');if(P.gac)label(`Gác lầu ${sgn(lauY+HG)}`,-1.7,lauY+HG+.2,D/2,.5,'nhan');
+ bounds={cx:(L+FR)/2,cz:D/2,s:(L+FR)/19,L,D};
+ const sh=Math.max(L+FR,D)/2+16,sc=sun.shadow.camera;sc.left=-sh;sc.right=sh;sc.top=sh;sc.bottom=-sh;sc.updateProjectionMatrix();sun.position.set(bounds.cx+28,42,bounds.cz+26);sun.target.position.set(bounds.cx,0,bounds.cz);sun.target.updateMatrixWorld();
+ controls.minDistance=6*bounds.s;controls.maxDistance=120;
+ applyVis();$('stat').textContent=`${items.filter(i=>i.cat!=='nhan'&&i.o.isMesh).length} cấu kiện · lưới ${N(W,2)} m · ${nR} bậc thang chính · ${placed} xe máy dưới thang`;
+ if(!firstViewDone){firstViewDone=true;goView('persp',true)}
+}
+let firstViewDone=false,sun,tween=null;
+function viewDef(n){const b=bounds,s=b.s,c=new THREE.Vector3(b.cx,2.5,b.cz);
+ if(n==='front')return{p:new THREE.Vector3(b.cx+32.5*s,7,b.cz),t:new THREE.Vector3(b.cx,3,b.cz)};
+ if(n==='side')return{p:new THREE.Vector3(b.cx,8,b.cz-22*s),t:new THREE.Vector3(b.cx,3,b.cz)};
+ if(n==='top')return{p:new THREE.Vector3(b.cx,Math.max(b.L+FRv(),b.D*3)*1.4,b.cz+.6),t:new THREE.Vector3(b.cx,0,b.cz)};
+ return{p:new THREE.Vector3(b.cx+24.5*s,12.5+2*s,b.cz+18*s),t:c}}
+const FRv=()=>P.FR;
+function goView(n,instant){const v=viewDef(n);if(instant||matchMedia('(prefers-reduced-motion: reduce)').matches){camera.position.copy(v.p);controls.target.copy(v.t);controls.update();tween=null}else tween={a:camera.position.clone(),b:controls.target.clone(),p:v.p,t:v.t,s:performance.now()};
+ document.querySelectorAll('[data-v]').forEach(b=>b.classList.toggle('on',b.dataset.v===n))}
+document.querySelectorAll('[data-v]').forEach(b=>b.onclick=()=>{$('plan').value='3d';setPlan();goView(b.dataset.v)});
+function setPlan(){const v=$('plan').value;
+ if(v==='3d'){['tret','lau','mai'].forEach(k=>{LV[k]=true;$('lv-'+k).checked=true})}
+ else{LV.tret=v==='tret';LV.lau=v==='lau';LV.mai=false;['tret','lau','mai'].forEach(k=>$('lv-'+k).checked=LV[k]);CV.nhan=true;document.querySelector('[data-c=nhan]').checked=true;goView('top')}
+ applyVis()}
+$('plan').onchange=setPlan;
+function initGL(){
+ try{if(!window.THREE)throw 0;renderer=new THREE.WebGLRenderer({antialias:true})}catch(e){$('fail').style.display='flex';return false}
+ renderer.setPixelRatio(Math.min(devicePixelRatio||1,2));renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;host.appendChild(renderer.domElement);
+ scene=new THREE.Scene();scene.background=new THREE.Color(0x0a1328);camera=new THREE.PerspectiveCamera(36,1,.1,500);
+ controls=new THREE.OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.dampingFactor=.08;controls.maxPolarAngle=Math.PI*.499;
+ scene.add(new THREE.HemisphereLight(0xffffff,0x6a7590,.95));
+ sun=new THREE.DirectionalLight(0xffffff,.85);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);sun.shadow.camera.near=1;sun.shadow.camera.far=160;sun.shadow.bias=-.0004;scene.add(sun);scene.add(sun.target);
+ UNIT=new THREE.BoxGeometry(1,1,1);world=new THREE.Group();scene.add(world);
+ const rs=()=>{const w=host.clientWidth||800,h=host.clientHeight||500;renderer.setSize(w,h,false);camera.aspect=w/h;camera.fov=w/h<.9?52:36;camera.updateProjectionMatrix()};
+ window.ResizeObserver?new ResizeObserver(rs).observe(host):addEventListener('resize',rs);rs();window.__rs=rs;
+ (function frame(now){if(tween){const k=Math.min(1,(now-tween.s)/900),e=k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2;camera.position.lerpVectors(tween.a,tween.p,e);controls.target.lerpVectors(tween.b,tween.t,e);if(k>=1)tween=null}controls.update();renderer.render(scene,camera);requestAnimationFrame(frame)})(0);
+ return true}
+
+/* ================= KHỐI LƯỢNG ================= */
+const HL0={mong:40,giang:200,cot:260,dam:285,san:120,thang:180},HLN={mong:'Móng',giang:'Giằng móng',cot:'Cột',dam:'Dầm',san:'Sàn',thang:'Thang'};let hl=Object.assign({},HL0,st.get('nt2_hl',{}));
+const PR0={bt:1400000,cp:170000,th:18000,x150:290000,tr:130000,ct:200000,son:90000,cua:1900000,gac:1000000,ts:5000000,dn:12000000};let pr=Object.assign({},PR0,st.get('nt2_pr',{}));
+$('steel').innerHTML=Object.keys(HL0).map(k=>`<label>${HLN[k]}<input data-k="${k}" type="number" value="${hl[k]}"></label>`).join('');
+$('steel').onchange=e=>{hl[e.target.dataset.k]=+e.target.value;st.set('nt2_hl',hl);renderQty()};
+let QROWS=[],QAGG=[],TOT=0;
+const sum4=a=>a.reduce((x,y)=>x+y,0);
+function calc(){
+ const{D,SH,W,HF}=P,T=P.TT/1000,Dr=D-SH,L=P.N*W,r=rooms$(),NT=r.NT,NL=r.NL,R=r.R,Gg=P.G,nc=2*(P.N+1),lin=2*L+(P.N+1)*Dr,S=stairGeom();
+ const cot=nc*.0484*HF,rows=[];const add=(n,u,v,k)=>rows.push({n,u,v,k});
+ const bt={mong:[nc*.4,0,0,0],giang:[lin*.06,0,0,0],cot:[0,cot,cot,0],dam:[0,0,lin*.06,lin*.06],san:[0,0,L*D*.12,L*Dr*.12],thang:[0,S.vol,0,0]};
+ add('Bê tông móng','m3',bt.mong,'bt');add('Bê tông giằng móng','m3',bt.giang,'bt');add('Bê tông cột','m3',bt.cot,'bt');add('Bê tông dầm','m3',bt.dam,'bt');add('Bê tông sàn','m3',bt.san,'bt');add('Bê tông thang','m3',bt.thang,'bt');
+ const cc=nc*4*.22*HF;
+ add('Cốp pha móng','m2',[nc*1.6,0,0,0],'cp');add('Cốp pha giằng móng','m2',[lin*.6,0,0,0],'cp');add('Cốp pha cột','m2',[0,cc,cc,0],'cp');add('Cốp pha dầm','m2',[0,0,lin*.8,lin*.8],'cp');add('Cốp pha sàn','m2',[0,0,L*D,L*Dr],'cp');add('Cốp pha thang','m2',[0,S.cop,0,0],'cp');
+ Object.keys(bt).forEach(k=>add('Cốt thép '+HLN[k].toLowerCase(),'kg',bt[k].map(x=>x*hl[k]),'th'));
+ const wt=2*(NT*W)+Gg*W+(NT+1)*Dr+NT*2.7,wl=2*L+(NL+1)*Dr+NL*2.7,hh=(HF-.3)*.85;
+ const xay=[0,wt*hh,wl*hh,0],tr=xay.map(x=>2*x);
+ add(`Xây tường ${P.TT}`,'m2',xay,'x150');add('Trát tường (hai mặt)','m2',tr,'tr');
+ add('Chống thấm (WC, hành lang, mái)','m2',[0,NT*4,NL*4+L*SH,L*Dr+2*(L+Dr)*.3],'ct');
+ add('Sơn bả (tường + trần)','m2',[0,tr[1]+L*Dr,tr[2]+L*Dr,0],'son');
+ add('Cửa nhôm kính + cửa đi','m2',[0,NT*3.5,NL*3.5,0],'cua');
+ const ga=P.gac?1.45*(Dr-T-.8):0;
+ add('Gác lửng gỗ/sắt','m2',[0,NT*ga,NL*ga,0],'gac');add('Thang sắt gác','bộ',[0,P.gac?NT:0,P.gac?NL:0,0],'ts');add('Điện nước + thiết bị vệ sinh','phòng',[0,NT,NL,0],'dn');
+ QROWS=rows;
+ const agg=(k)=>sum4(rows.filter(x=>x.k===k).map(x=>sum4(x.v)));
+ QAGG=[['Bê tông thương phẩm M250-300','m3','bt'],['Cốp pha (ván + nhân công)','m2','cp'],['Cốt thép (thép + gia công)','kg','th'],[`Xây tường ${P.TT} (gạch + vữa + công)`,'m2','x150'],['Trát tường (vữa + công)','m2','tr'],['Chống thấm (ước tính)','m2','ct'],['Sơn bả trọn gói (tường + trần)','m2','son'],['Cửa nhôm Xingfa kính cường lực + cửa đi','m2','cua'],['Gác lửng gỗ/sắt (ước tính)','m2','gac'],['Thang sắt gác (bộ/phòng)','bộ','ts'],['Điện nước + thiết bị vệ sinh / phòng (ước tính)','phòng','dn']].map(a=>({n:a[0],u:a[1],k:a[2],q:agg(a[2])}));
+ return{NT,NL,R,nc,lin,L,Dr,S}}
+const fmt=(x,u)=>Math.abs(x)<1e-9?'–':N(x,2);
+function renderQty(){
+ const c=calc();
+ $('qt').innerHTML='<tr><th>Hạng mục</th><th>ĐVT</th><th class="r">Móng</th><th class="r">Trệt</th><th class="r">Lầu</th><th class="r">Mái</th><th class="r">Tổng</th></tr>'+QROWS.map(r=>`<tr><td>${r.n}</td><td class="u">${r.u}</td>${r.v.map(x=>`<td class="r">${fmt(x)}</td>`).join('')}<td class="r tot">${fmt(sum4(r.v))}</td></tr>`).join('');
+ const T=P.TT/1000;
+ $('qu').innerHTML=[
+  `Bê tông: cột 0,22 × 0,22 m (${c.nc} cột = 2 × ${P.N+1} trục), dầm 0,2 × 0,3 m, sàn dày 0,12 m, móng đơn 1 × 1 × 0,4 m.`,
+  `Sàn lầu tính toàn mặt bằng ${N(c.L,1)} × ${N(P.D,1)} m, gồm hành lang hông. Sàn mái chỉ tính phần phòng ${N(c.L,1)} × ${N(c.Dr,1)} m.`,
+  'Dầm tính theo chu vi và các trục ngang. Dầm và sàn thuộc tầng mà chúng làm nền: sàn lầu tính cho Lầu, sàn mái tính cho Mái.',
+  `Xây tường ${P.TT}: gạch 100 + tô hai mặt. Chiều cao trừ dầm 0,3 m, trừ cửa 15%. Vách WC 1,2 × 1,5 m tính 2,7 md mỗi phòng.`,
+  `Cầu thang chữ L: ${c.S.nR} bậc cao ${N(RISER*1000,0)} mm, mặt 240 mm, rộng 0,9 m. Bê tông gồm bản dày 0,12 m, bậc và chiếu nghỉ, tính vào Trệt.`,
+  'Cốt thép = bê tông × hàm lượng (kg/m³), sửa ở khung Hàm lượng thép.',
+  `Gác lửng rộng 1,45 m, sâu trừ lỗ thang ≈ ${N(P.gac?1.45*(c.Dr-T-.8):0,1)} m² mỗi phòng, làm bằng gỗ/sắt nên không tính bê tông.`,
+  'Chống thấm: sàn WC mỗi phòng 4 m², hành lang hông lầu, mái và gờ mái cao 0,3 m.',
+  'Xe máy, nội thất, cây không tính khối lượng. Chưa gồm đào đất, ốp lát, thiết bị vệ sinh.'].map(s=>`<li>${s}</li>`).join('');
+ TOT=0;
+ $('qk').innerHTML='<tr><th>Hạng mục</th><th class="r">KL</th><th>ĐVT</th><th class="r">Đơn giá (đ)</th><th class="r">Thành tiền (đ)</th></tr>'+QAGG.map(a=>{const t=a.q*pr[a.k];TOT+=t;return`<tr><td>${a.n}</td><td class="r">${N(a.q,1)}</td><td class="u">${a.u}</td><td class="r"><input data-k="${a.k}" type="number" value="${pr[a.k]}" style="width:120px;text-align:right"></td><td class="r">${F(t)}</td></tr>`}).join('')+`<tr class="s"><td colspan="4">Tổng phần thô (tham khảo)</td><td class="r">${F(TOT)}</td></tr>`;
+ if(typeof invest==='function')invest()}
+$('qk').onchange=e=>{if(e.target.dataset.k){pr[e.target.dataset.k]=+e.target.value||0;st.set('nt2_pr',pr);renderQty()}};
+function dl(name,blob){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();a.remove()}
+$('csv').onclick=()=>{const t='Hạng mục,ĐVT,Móng,Trệt,Lầu,Mái,Tổng\n'+QROWS.map(r=>[r.n,r.u,...r.v.map(x=>x.toFixed(2)),sum4(r.v).toFixed(2)].join(',')).join('\n');dl('khoi-luong.csv',new Blob(['﻿'+t],{type:'text/csv'}))};
+$('png').onclick=()=>{if(!renderer)return;renderer.render(scene,camera);renderer.domElement.toBlob(b=>b&&dl('mo-hinh-3d.png',b),'image/png')};
+const ascii=s=>s.normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/đ/g,'d').replace(/Đ/g,'D');
+$('dxf').onclick=()=>{const lv=$('plan').value==='lau'?'lau':'tret',mm=v=>Math.round(v*1000),out=[];
+ const line=(ly,a,b,c,d)=>out.push('0\nLINE\n8\n'+ly+`\n10\n${mm(a)}\n20\n${mm(b)}\n30\n0\n11\n${mm(c)}\n21\n${mm(d)}\n31\n0`);
+ const txt=(ly,x,y,h,s)=>out.push('0\nTEXT\n8\n'+ly+`\n10\n${mm(x)}\n20\n${mm(y)}\n30\n0\n40\n${h}\n1\n${ascii(s)}`);
+ plan.filter(p=>p.lv===lv).forEach(p=>{line('TUONG',p.x0,p.z0,p.x1,p.z0);line('TUONG',p.x1,p.z0,p.x1,p.z1);line('TUONG',p.x1,p.z1,p.x0,p.z1);line('TUONG',p.x0,p.z1,p.x0,p.z0)});
+ const L=P.N*P.W;for(let i=0;i<=P.N;i++){line('TRUC',i*P.W,-.5,i*P.W,P.D+.5);txt('TRUC',i*P.W-.1,P.D+.7,200,String.fromCharCode(65+i))}
+ line('TRUC',-.5,P.SH,L+.5,P.SH);line('TRUC',-.5,P.D,L+.5,P.D);
+ line('DIM',0,-1.2,L,-1.2);txt('DIM',L/2-.8,-1.7,250,`${N(L,2)} m`);line('DIM',-1.2,0,-1.2,P.D);txt('DIM',-2.6,P.D/2,250,`${N(P.D,2)} m`);
+ txt('DIM',0,-2.6,250,`Mat bang ${lv==='lau'?'lau':'tret'} - luoi ${N(P.W,2)} m`);
+ const lay=['TUONG','TRUC','DIM'];
+ const tb='0\nSECTION\n2\nTABLES\n0\nTABLE\n2\nLAYER\n70\n3\n'+lay.map((l,i)=>`0\nLAYER\n2\n${l}\n70\n0\n62\n${[7,1,3][i]}\n6\nCONTINUOUS`).join('\n')+'\n0\nENDTAB\n0\nENDSEC\n';
+ dl(`mat-bang-${lv}.dxf`,new Blob([tb+'0\nSECTION\n2\nENTITIES\n'+out.join('\n')+'\n0\nENDSEC\n0\nEOF\n'],{type:'application/dxf'}))};
+
+/* ================= PHÒNG, THU CHI, LỢI NHUẬN, BẢO TRÌ ================= */
+document.querySelectorAll('#nav button').forEach(b=>b.onclick=()=>{document.querySelectorAll('#nav button').forEach(x=>x.classList.toggle('on',x==b));document.querySelectorAll('section.tab').forEach(s=>s.classList.toggle('on',s.id==b.dataset.t));refresh();if(b.dataset.t==='sd'&&window.__rs)setTimeout(window.__rs,30)});
+function LM(id,key,cols,seed,cb){let d=st.get(key,seed);const el=$(id);
+ function draw(){el.innerHTML='<tr>'+cols.map(c=>`<th>${c[1]}</th>`).join('')+'<th></th></tr>'+d.map((r,i)=>'<tr>'+cols.map(c=>`<td>${c[2]=='s'?`<select data-i="${i}" data-k="${c[0]}">${c[3].map(o=>`<option${o==r[c[0]]?' selected':''}>${o}</option>`).join('')}</select>`:`<input data-i="${i}" data-k="${c[0]}" type="${c[2]}" value="${r[c[0]]??''}">`}</td>`).join('')+`<td><button class="b" data-x="${i}">Xóa</button></td></tr>`).join('')}
+ const save=()=>{st.set(key,d);cb&&cb()};
+ el.onclick=e=>{if(e.target.dataset.x!=null){d.splice(+e.target.dataset.x,1);save();draw()}};
+ el.onchange=e=>{const t=e.target;if(t.dataset.k){d[t.dataset.i][t.dataset.k]=t.type=='number'?+t.value:t.value;save()}};
+ draw();return{get:()=>d,add:r=>{d.push(r);save();draw()},redraw:draw,save}}
+const newRoom=i=>({ten:'Phòng '+(i+1)+(i<rooms$().NT?' (trệt)':' (lầu)'),khach:'',sdt:'',gia:5000000,coc:5000000,vao:'',het:'',tt:'Trống',dc:0,dm:0,nc:0,nm:0});
+const rooms=LM('rm','nt2_rooms',[['ten','Phòng','text'],['khach','Khách thuê','text'],['sdt','SĐT','text'],['gia','Giá thuê (đ)','number'],['coc','Tiền cọc (đ)','number'],['vao','Ngày vào','date'],['het','Ngày hết hạn','date'],['tt','Trạng thái','s',['Trống','Đã thuê']],['dc','Điện cũ','number'],['dm','Điện mới','number'],['nc','Nước cũ','number'],['nm','Nước mới','number']],
+ Array.from({length:rooms$().R},(_,i)=>newRoom(i)),()=>{sum();invest()});
+function ensureRooms(){const R=rooms$().R;let n=rooms.get().length;while(n<R){rooms.add(newRoom(n));n++}rmnote()}
+function rmnote(){const R=rooms$().R,n=rooms.get().length;$('rmnote').textContent=n===R?`Mô hình có ${R} phòng, khớp với danh sách.`:`Mô hình có ${R} phòng, danh sách đang có ${n} phòng. Xóa hoặc thêm cho khớp.`}
+$('addroom').onclick=()=>{rooms.add(newRoom(rooms.get().length));rmnote()};
+function sum(){const r=rooms.get(),o=r.filter(x=>x.tt=='Đã thuê');const cd=[['Phòng đã thuê',o.length+' / '+r.length],['Tiền thuê / tháng',F(o.reduce((a,x)=>a+x.gia,0))+' đ'],['Phòng trống',r.length-o.length]];$('rs').innerHTML=cd.map(c=>`<div class="card">${c[0]}<b>${c[1]}</b></div>`).join('')}
+$('bill').onclick=()=>{const d=new Date().toISOString().slice(0,10),pe=+$('pe').value,pw=+$('pw').value;let n=0;rooms.get().forEach(x=>{if(x.tt!='Đã thuê')return;
+ tcl.add({ngay:d,loai:'Thu',hm:'Tiền phòng – '+x.ten,tien:x.gia,gc:x.khach});const dn=Math.max(0,x.dm-x.dc)*pe+Math.max(0,x.nm-x.nc)*pw;if(dn)tcl.add({ngay:d,loai:'Thu',hm:'Điện nước – '+x.ten,tien:dn,gc:''});x.dc=x.dm;x.nc=x.nm;n++});rooms.save();rooms.redraw();$('rmnote').textContent='Đã ghi thu cho '+n+' phòng đang thuê.'};
+const tcl=LM('tc','nt2_tc',[['ngay','Ngày','date'],['loai','Loại','s',['Thu','Chi']],['hm','Hạng mục','text'],['tien','Số tiền (đ)','number'],['gc','Ghi chú','text']],[],()=>{month();invest()});
+$('addtc').onclick=()=>tcl.add({ngay:new Date().toISOString().slice(0,10),loai:'Chi',hm:'',tien:0,gc:''});
+function month(){const m={};tcl.get().forEach(x=>{const k=(x.ngay||'').slice(0,7)||'Chưa có ngày';m[k]=m[k]||[0,0];m[k][x.loai=='Thu'?0:1]+=x.tien});
+ $('tm').innerHTML='<tr><th>Tháng</th><th class="r">Thu</th><th class="r">Chi</th><th class="r">Lãi/lỗ</th></tr>'+Object.keys(m).sort().reverse().map(k=>`<tr><td>${k}</td><td class="r">${F(m[k][0])}</td><td class="r">${F(m[k][1])}</td><td class="r">${F(m[k][0]-m[k][1])}</td></tr>`).join('')}
+const IN=[['oth','Hoàn thiện + nội thất + thủ tục (triệu đ)',400],['occ','Tỷ lệ lấp đầy dự kiến (%)',90],['xe','Thu nhà xe / tháng (đ)',0],['op','Chi phí vận hành (% doanh thu)',15],['mt','Bảo trì (% vốn / năm)',1.5],['tax','Thuế giả định (% doanh thu)',10]];
+let iv=Object.assign(Object.fromEntries(IN.map(a=>[a[0],a[2]])),st.get('nt2_iv',{}));
+$('inv').innerHTML=IN.map(a=>`<label>${a[1]}<input data-k="${a[0]}" type="number" value="${iv[a[0]]}"></label>`).join('');
+$('inv').onchange=e=>{iv[e.target.dataset.k]=+e.target.value;st.set('nt2_iv',iv);invest()};
+function invest(){const r=rooms.get(),cap=TOT+iv.oth*1e6,rev=(r.reduce((a,x)=>a+x.gia,0)*iv.occ/100+iv.xe)*12,op=rev*iv.op/100,mt=cap*iv.mt/100,tx=rev*iv.tax/100,pf=rev-op-mt-tx;
+ const tc=tcl.get(),thu=tc.filter(x=>x.loai=='Thu').reduce((a,x)=>a+x.tien,0),chi=tc.filter(x=>x.loai=='Chi').reduce((a,x)=>a+x.tien,0);
+ const cd=[['Vốn đầu tư dự kiến',F(cap)+' đ'],['Doanh thu / năm',F(rev)+' đ'],['Vận hành / năm',F(op)+' đ'],['Bảo trì / năm',F(mt)+' đ'],['Thuế / năm',F(tx)+' đ'],['Lợi nhuận / năm',F(pf)+' đ'],['Lợi nhuận / tháng',F(pf/12)+' đ'],['Lợi suất / vốn',N(cap?pf/cap*100:0)+' %'],['Hoàn vốn',pf>0?N(cap/pf)+' năm':'Chưa có lãi'],['Thực thu (sổ thu chi)',F(thu)+' đ'],['Thực chi (sổ thu chi)',F(chi)+' đ'],['Thuế tạm tính trên thực thu',F(thu*iv.tax/100)+' đ']];
+ $('out').innerHTML=cd.map(c=>`<div class="card">${c[0]}<b>${c[1]}</b></div>`).join('')}
+const btl=LM('bt','nt2_bt',[['hm','Hạng mục','text'],['kv','Khu vực','text'],['ck','Chu kỳ','s',['Tháng','Quý','6 tháng','Năm']],['cuoi','Lần cuối','date'],['tt','Trạng thái','s',['Cần làm','Đã làm']],['cp','Chi phí (đ)','number']],
+ [['Kiểm tra chống thấm mái, sàn hông','Mái, hành lang','Năm'],['Kiểm tra bình chữa cháy, đèn thoát hiểm','Toàn nhà','Quý'],['Kiểm tra điện, aptomat từng phòng','Các phòng','6 tháng'],['Hút hầm cầu, thông ống thoát nước','Khu WC','Năm'],['Sơn lại, vá tường nứt','Mặt tiền, cầu thang','Năm']].map(a=>({hm:a[0],kv:a[1],ck:a[2],cuoi:'',tt:'Cần làm',cp:0})));
+$('addbt').onclick=()=>btl.add({hm:'',kv:'',ck:'Quý',cuoi:'',tt:'Cần làm',cp:0});
+const TD=['Quyền sử dụng đất, quy hoạch, chỉ giới xây dựng','Giấy phép xây dựng','Thiết kế và thẩm duyệt phòng cháy chữa cháy','Hợp đồng nhà thầu, nghiệm thu từng giai đoạn','Đăng ký hộ kinh doanh, mã số thuế','Thông báo lưu trú, đăng ký tạm trú cho khách thuê','Hợp đồng thuê mẫu và nội quy','Bảo hiểm cháy nổ, camera an ninh'];let td=st.get('nt2_td',{});
+$('td').innerHTML=TD.map((t,i)=>`<label><input type="checkbox" data-i="${i}" ${td[i]?'checked':''}>${t}</label>`).join('');
+$('td').onchange=e=>{td[e.target.dataset.i]=e.target.checked;st.set('nt2_td',td)};
+function refresh(){sum();month();renderQty();rmnote();if(typeof remind==='function')remind()}
+
+
+/* ================= GOOGLE, SAO LƯU, NHẮC VIỆC ================= */
+let G=Object.assign({nha:'Nhà 1',hd:30,bt:7},st.get('nt3_g',{}));
+$('nha').value=G.nha;$('r-hd').value=G.hd;$('r-bt').value=G.bt;
+$('sg').addEventListener('change',e=>{if(e.target.id==='nha')G.nha=e.target.value;if(e.target.id==='r-hd')G.hd=+e.target.value||0;if(e.target.id==='r-bt')G.bt=+e.target.value||0;st.set('nt3_g',G);remind()});
+const fd=d=>{if(!d)return '';const[a,b,c]=d.split('-');return c+'/'+b+'/'+a};
+const tsv=rows=>rows.map(r=>r.map(x=>String(x??'').replace(/[\t\n]/g,' ')).join('\t')).join('\n');
+const TB={
+ rm:()=>tsv(rooms.get().map(r=>[G.nha,r.ten.replace(/^Phòng\s*/,'').replace(/\s*\(.*\)$/,''),r.khach,r.sdt,r.gia,r.coc,fd(r.vao),fd(r.het)])),
+ tc:()=>tsv(tcl.get().map(r=>[fd(r.ngay),G.nha,r.loai==='Thu'?'Thu':'Chi vận hành',r.hm,r.tien,r.gc])),
+ bt:()=>tsv(btl.get().map(r=>[G.nha,r.hm,{'Tháng':30,'Quý':90,'6 tháng':180,'Năm':365}[r.ck]||'',fd(r.cuoi),'','','',r.cp||'',r.kv]))};
+function copyText(t){return(navigator.clipboard&&navigator.clipboard.writeText?navigator.clipboard.writeText(t):Promise.reject()).catch(()=>{const a=document.createElement('textarea');a.value=t;document.body.appendChild(a);a.select();let ok=false;try{ok=document.execCommand('copy')}catch(e){}a.remove();if(!ok)throw 0})}
+document.querySelectorAll('[data-cp]').forEach(b=>b.onclick=()=>{const t=TB[b.dataset.cp]();copyText(t).then(()=>{$('cpmsg').textContent='Đã sao chép '+(t?t.split('\n').length:0)+' dòng. Dán vào tab tương ứng trong Google Sheet.'},()=>{$('cpmsg').textContent='Trình duyệt chặn sao chép. Thử mở file bằng Chrome hoặc Edge.'})});
+$('bk').onclick=()=>{const o={ver:3,at:new Date().toISOString(),P,hl,pr,iv,G,rooms:rooms.get(),tc:tcl.get(),bt:btl.get(),td};dl('sao-luu-nha-tro-'+o.at.slice(0,10)+'.json',new Blob([JSON.stringify(o,null,1)],{type:'application/json'}))};
+$('rs').onchange=e=>{const f=e.target.files[0];if(!f)return;f.text().then(t=>{const o=JSON.parse(t);const put=(k,v)=>st.set(k,v);put('nt3_p',o.P);put('nt2_hl',o.hl);put('nt2_pr',o.pr);put('nt2_iv',o.iv);put('nt3_g',o.G);put('nt2_rooms',o.rooms);put('nt2_tc',o.tc);put('nt2_bt',o.bt);put('nt2_td',o.td);location.reload()}).catch(()=>{$('cpmsg').textContent='File sao lưu không đọc được.'})};
+const addM=(d,m)=>{const x=new Date(d+'T00:00:00Z');x.setUTCMonth(x.getUTCMonth()+m);return x.toISOString().slice(0,10)};
+function reminders(){const out=[];rooms.get().forEach(r=>{if(r.tt==='Đã thuê'&&r.het)out.push({d:r.het,t:'Hết hạn hợp đồng '+r.ten+(r.khach?' – '+r.khach:''),lead:G.hd,k:'Hợp đồng'})});
+ btl.get().forEach(r=>{const m={'Tháng':1,'Quý':3,'6 tháng':6,'Năm':12}[r.ck];if(r.cuoi&&m)out.push({d:addM(r.cuoi,m),t:'Bảo trì: '+r.hm,lead:G.bt,k:'Bảo trì'})});
+ return out.sort((a,b)=>a.d<b.d?-1:1)}
+function remind(){const r=reminders(),today=new Date().toISOString().slice(0,10);$('rmd').innerHTML='<tr><th>Ngày</th><th>Loại</th><th>Việc</th><th class="r">Còn lại (ngày)</th><th class="r">Nhắc trước</th></tr>'+(r.length?r.map(x=>`<tr><td>${fd(x.d)}</td><td>${x.k}</td><td>${x.t}</td><td class="r">${Math.round((new Date(x.d)-new Date(today))/864e5)}</td><td class="r">${x.lead} ngày</td></tr>`).join(''):'<tr><td colspan="5" class="u">Chưa có việc. Điền Ngày hết hạn cho phòng đang thuê và Lần cuối cho việc bảo trì.</td></tr>')}
+$('ics').onclick=()=>{const r=reminders(),now=new Date().toISOString().replace(/[-:]/g,'').slice(0,15)+'Z',esc=t=>t.replace(/[,;\\]/g,m=>'\\'+m);
+ const L=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Nha tro cao cap//VI','CALSCALE:GREGORIAN'];
+ r.forEach((x,i)=>{const d=x.d.replace(/-/g,''),e=addM(x.d,0);const nx=new Date(x.d+'T00:00:00Z');nx.setUTCDate(nx.getUTCDate()+1);L.push('BEGIN:VEVENT','UID:nt3-'+d+'-'+i+'@nhatro','DTSTAMP:'+now,'DTSTART;VALUE=DATE:'+d,'DTEND;VALUE=DATE:'+nx.toISOString().slice(0,10).replace(/-/g,''),'SUMMARY:'+esc(x.t),'BEGIN:VALARM','ACTION:DISPLAY','DESCRIPTION:'+esc(x.t),'TRIGGER:-P'+x.lead+'D','END:VALARM','END:VEVENT')});
+ L.push('END:VCALENDAR');dl('nhac-viec-nha-tro.ics',new Blob([L.join('\r\n')],{type:'text/calendar'}))};
+
+/* ================= KHỞI ĐỘNG ================= */
+der();
+if(initGL()){build();if(document.fonts&&document.fonts.load)document.fonts.load('700 34px "Space Mono"').then(()=>build(),()=>{})}
+refresh();
+</script></body></html>
