@@ -370,7 +370,7 @@ function LM(id,key,cols,seed,cb){let d=st.get(key,seed);const el=$(id);
  draw();const o={get:()=>d,setData:v=>{d=v;try{localStorage.setItem(key,JSON.stringify(v))}catch(e){}draw();cb&&cb()},add:r=>{d.push(r);save();draw()},redraw:draw,save};(window.LMS=window.LMS||{})[key]=o;return o}
 const newRoom=i=>({ten:'Phòng '+(i+1)+(i<rooms$().NT?' (trệt)':' (lầu)'),khach:'',sdt:'',gia:5000000,coc:5000000,vao:'',het:'',tt:'Trống',dc:0,dm:0,nc:0,nm:0});
 const rooms=LM('rm','nt2_rooms',[['ten','Phòng','text'],['khach','Khách thuê','text'],['sdt','SĐT','text'],['gia','Giá thuê (đ)','number'],['coc','Tiền cọc (đ)','number'],['vao','Ngày vào','date'],['het','Ngày hết hạn','date'],['tt','Trạng thái','s',['Trống','Đã thuê']],['dc','Điện cũ','number'],['dm','Điện mới','number'],['nc','Nước cũ','number'],['nm','Nước mới','number']],
- Array.from({length:rooms$().R},(_,i)=>newRoom(i)),()=>{sum();invest()});
+ Array.from({length:rooms$().R},(_,i)=>newRoom(i)),()=>{sum();month();invest()});
 function ensureRooms(){const R=rooms$().R,l=rooms.get();let n=l.length;while(n<R){rooms.add(newRoom(n));n++}let t=0;while(l.length>R&&l[l.length-1].tt==='Trống'&&!l[l.length-1].khach){l.pop();t++}if(t){rooms.save();rooms.redraw()}rmnote()}
 function rmnote(){const R=rooms$().R,n=rooms.get().length;$('rmnote').textContent=n===R?`Mô hình có ${R} phòng, khớp với danh sách.`:`Mô hình có ${R} phòng, danh sách đang có ${n} phòng. Xóa hoặc thêm cho khớp.`}
 $('addroom').onclick=()=>{rooms.add(newRoom(rooms.get().length));rmnote()};
@@ -379,8 +379,10 @@ $('bill').onclick=()=>{const d=new Date().toISOString().slice(0,10),pe=+$('pe').
  tcl.add({ngay:d,loai:'Thu',hm:'Tiền phòng – '+x.ten,tien:x.gia,gc:x.khach});const dn=Math.max(0,x.dm-x.dc)*pe+Math.max(0,x.nm-x.nc)*pw;if(dn)tcl.add({ngay:d,loai:'Thu',hm:'Điện nước – '+x.ten,tien:dn,gc:''});x.dc=x.dm;x.nc=x.nm;n++});rooms.save();rooms.redraw();$('rmnote').textContent='Đã ghi thu cho '+n+' phòng đang thuê.'};
 const tcl=LM('tc','nt2_tc',[['ngay','Ngày','date'],['loai','Loại','s',['Thu','Chi']],['hm','Hạng mục','text'],['tien','Số tiền (đ)','number'],['gc','Ghi chú','text']],[],()=>{month();invest()});
 $('addtc').onclick=()=>tcl.add({ngay:new Date().toISOString().slice(0,10),loai:'Chi',hm:'',tien:0,gc:''});
-function month(){const m={};tcl.get().forEach(x=>{const k=(x.ngay||'').slice(0,7)||'Chưa có ngày';m[k]=m[k]||[0,0];m[k][x.loai=='Thu'?0:1]+=x.tien});
- $('tm').innerHTML='<tr><th>Tháng</th><th class="r">Thu</th><th class="r">Chi</th><th class="r">Lãi/lỗ</th></tr>'+Object.keys(m).sort().reverse().map(k=>`<tr><td>${k}</td><td class="r">${F(m[k][0])}</td><td class="r">${F(m[k][1])}</td><td class="r">${F(m[k][0]-m[k][1])}</td></tr>`).join('')}
+function month(){const m={},cm=new Date().toISOString().slice(0,7),z=()=>({t:0,c:0,b:0,h:0});
+ tcl.get().forEach(x=>{const k=(x.ngay||'').slice(0,7)||'Chưa có ngày';m[k]=m[k]||z();if(x.loai=='Thu'){m[k].t+=x.tien;if(/^Tiền phòng/.test(x.hm))m[k].b+=x.tien}else m[k].c+=x.tien});
+ rooms.get().filter(r=>r.tt=='Đã thuê'&&r.vao).forEach(r=>{let[y,mo]=r.vao.slice(0,7).split('-').map(Number);for(let n=0;n<600&&y&&mo;n++){const k=y+'-'+String(mo).padStart(2,'0');if(k>cm||(r.het&&k>r.het.slice(0,7)))break;m[k]=m[k]||z();m[k].h+=r.gia;if(++mo>12){mo=1;y++}}});
+ $('tm').innerHTML='<tr><th>Tháng</th><th class="r">Thu ghi sổ</th><th class="r">Tiền phòng theo hợp đồng, chưa ghi sổ</th><th class="r">Chi</th><th class="r">Lãi/lỗ</th></tr>'+Object.keys(m).sort().reverse().map(k=>{const v=m[k],ex=Math.max(0,v.h-v.b);return`<tr><td>${k}</td><td class="r">${F(v.t)}</td><td class="r">${F(ex)}</td><td class="r">${F(v.c)}</td><td class="r">${F(v.t+ex-v.c)}</td></tr>`}).join('')+'<tr><td colspan="5" style="color:var(--m)">Phòng “Đã thuê” được tính trọn tháng từ tháng bắt đầu đến tháng hiện tại (hoặc đến khi hết hạn). Bấm “Chốt hóa đơn tháng” ở tab Phòng để ghi thu thật vào sổ.</td></tr>'}
 const IN=[['oth','Hoàn thiện + nội thất + thủ tục (triệu đ)',400],['occ','Tỷ lệ lấp đầy dự kiến (%)',90],['xe','Thu nhà xe / tháng (đ)',0],['op','Chi phí vận hành (% doanh thu)',15],['mt','Bảo trì (% vốn / năm)',1.5],['tax','Thuế giả định (% doanh thu)',10]];
 let iv=Object.assign(Object.fromEntries(IN.map(a=>[a[0],a[2]])),st.get('nt2_iv',{}));
 $('inv').innerHTML=IN.map(a=>`<label>${a[1]}<input data-k="${a[0]}" type="number" value="${iv[a[0]]}"></label>`).join('');
@@ -406,7 +408,7 @@ const fd=d=>{if(!d)return '';const[a,b,c]=d.split('-');return c+'/'+b+'/'+a};
 const tsv=rows=>rows.map(r=>r.map(x=>String(x??'').replace(/[\t\n]/g,' ')).join('\t')).join('\n');
 const TB={
  rm:()=>tsv(rooms.get().map(r=>[G.nha,r.ten.replace(/^Phòng\s*/,'').replace(/\s*\(.*\)$/,''),r.khach,r.sdt,r.gia,r.coc,fd(r.vao),fd(r.het)])),
- tc:()=>tsv(tcl.get().map(r=>[fd(r.ngay),G.nha,r.loai==='Thu'?'Thu':'Chi vận hành',r.hm,r.tien,r.gc])),
+ tc:()=>tsv(tcl.get().map(r=>{const m=/^(Tiền phòng|Điện nước) – (.*)$/.exec(r.hm||'');return[fd(r.ngay),G.nha,r.loai==='Thu'?'Thu':'Chi vận hành',m?(m[1]==='Tiền phòng'?'Tiền thuê phòng':'Điện nước thu'):r.hm,r.tien,m?(m[2]+(r.gc?' · '+r.gc:'')):r.gc]})),
  bt:()=>tsv(btl.get().map(r=>[G.nha,r.hm,{'Tháng':30,'Quý':90,'6 tháng':180,'Năm':365}[r.ck]||'',fd(r.cuoi),'','','',r.cp||'',r.kv]))};
 function copyText(t){return(navigator.clipboard&&navigator.clipboard.writeText?navigator.clipboard.writeText(t):Promise.reject()).catch(()=>{const a=document.createElement('textarea');a.value=t;document.body.appendChild(a);a.select();let ok=false;try{ok=document.execCommand('copy')}catch(e){}a.remove();if(!ok)throw 0})}
 document.querySelectorAll('[data-cp]').forEach(b=>b.onclick=()=>{const t=TB[b.dataset.cp]();copyText(t).then(()=>{$('cpmsg').textContent='Đã sao chép '+(t?t.split('\n').length:0)+' dòng. Dán vào tab tương ứng trong Google Sheet.'},()=>{$('cpmsg').textContent='Trình duyệt chặn sao chép. Thử mở file bằng Chrome hoặc Edge.'})});
