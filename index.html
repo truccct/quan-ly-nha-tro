@@ -109,6 +109,10 @@ tr.s td{color:var(--g);font-size:14px}
 <p class="note">Trang này chạy trong trình duyệt nên chưa tự đăng nhập Google. Dữ liệu được xuất đúng cột của Google Sheet “Theo dõi 2 nhà trọ cao cấp” để dán vào, kèm file nhắc việc nhập được vào Google Calendar.</p>
 <div class="row" style="margin:12px 0"><a class="b" style="text-decoration:none" target="_blank" rel="noopener" href="https://docs.google.com/spreadsheets/d/1K-t1dW9aSG_buNL9FSGYpissCmKEiyDYAOUBPPXdOso/edit">Mở Google Sheet</a><a class="b" style="text-decoration:none" target="_blank" rel="noopener" href="https://docs.google.com/document/d/1ET6ERnyQgApdtYkCHj8ThA2XyvMjWkPx_J8erK3MMZo/edit">Mở Google Doc</a><a class="b" style="text-decoration:none" target="_blank" rel="noopener" href="https://calendar.google.com/calendar/u/0/r">Mở Google Calendar</a></div>
 <div class="g"><label>Tên nhà (cột Nhà trong Sheet)<input id="nha" type="text"></label><label>Nhắc hợp đồng hết hạn trước (ngày)<input id="r-hd" type="number"></label><label>Nhắc bảo trì trước (ngày)<input id="r-bt" type="number"></label></div>
+<h3>Đồng bộ tự động vào Google Sheet</h3>
+<p class="note">Cần làm một lần: mở Google Sheet, Tiện ích mở rộng, Apps Script, dán nội dung file google-apps-script.gs, đổi TOKEN, rồi Triển khai, Ứng dụng web, chạy với quyền của bạn, ai có đường dẫn đều truy cập được. Dán đường dẫn /exec và mật khẩu vào đây. App ghi đè cột nhập liệu của các tab Phòng, Thu chi, Bảo trì; công thức và các tab Dự toán, Tổng hợp giữ nguyên.</p>
+<div class="g"><label>Đường dẫn ứng dụng web (/exec)<input id="gsu" type="text"></label><label>Mật khẩu (TOKEN)<input id="gst" type="password"></label><label><input id="gsa" type="checkbox" style="width:auto"> Tự động đẩy lên Sheet khi có thay đổi</label></div>
+<button class="b" id="gsgo">Đồng bộ lên Sheet ngay</button><p class="info" id="gsm">Chưa cấu hình.</p>
 <h3>Sao lưu vào Sheet</h3>
 <button class="b" data-cp="rm">Sao chép bảng Phòng</button><button class="b" data-cp="tc">Sao chép bảng Thu chi</button><button class="b" data-cp="bt">Sao chép bảng Bảo trì</button>
 <p class="info" id="cpmsg">Bấm một nút, mở tab tương ứng trong Sheet, chọn ô A5 (Phòng), A3 (Thu chi) hoặc A5 (Bảo trì) rồi dán. Bỏ dòng mẫu cũ trước khi dán.</p>
@@ -451,4 +455,20 @@ async function go(reg){try{const cfg=JSON.parse($('fbc').value);st.set('nt3_fbc'
 $('fbgo').onclick=()=>go(false);$('fbreg').onclick=()=>go(true);
 $('fbout').onclick=()=>{live=false;try{dbr&&dbr.off();firebase.auth().signOut()}catch(x){}fbs('Đã ngắt kết nối.')};
 (async()=>{const c=st.get('nt3_fbc',null);if(!c)return;$('fbc').value=JSON.stringify(c);try{await lib();if(!firebase.apps.length)firebase.initializeApp(c);firebase.auth().onAuthStateChanged(u=>{if(u&&!live)start(u.email).catch(x=>fbs('Lỗi: '+x.message))})}catch(x){}})();
+</script><script>
+/* ===== trạng thái phòng tự theo khách thuê (đúng quy ước của Sheet) ===== */
+{const css=document.createElement('style');css.textContent='#rm td:first-child input{min-width:150px}#rm td input[data-k=khach]{min-width:130px}';document.head.appendChild(css)}
+$('rm').addEventListener('input',e=>{const t=e.target;if(t.dataset.k!=='khach')return;const i=t.dataset.i,r=rooms.get()[i];if(!r)return;const want=t.value.trim()?'Đã thuê':'Trống';
+ if(r.tt!==want){r.tt=want;rooms.save();const sel=$('rm').querySelector('select[data-i="'+i+'"][data-k="tt"]');if(sel)sel.value=want}});
+/* ===== đồng bộ Google Sheet qua Apps Script ===== */
+let gs=Object.assign({url:'',tok:'',auto:false},st.get('nt3_gs',{}));$('gsu').value=gs.url;$('gst').value=gs.tok;$('gsa').checked=gs.auto;
+const gsm=m=>$('gsm').textContent=m,rowsOf=k=>TB[k]().split('\n').filter(Boolean).map(l=>l.split('\t'));
+function gsSave(){gs={url:$('gsu').value.trim(),tok:$('gst').value,auto:$('gsa').checked};st.set('nt3_gs',gs)}
+['gsu','gst'].forEach(i=>$(i).oninput=gsSave);$('gsa').onchange=()=>{gsSave();if(gs.auto)gsSend()};
+async function gsSend(){gsSave();if(!gs.url||!gs.tok){gsm('Cần nhập đường dẫn và mật khẩu.');return}
+ const body=JSON.stringify({token:gs.tok,rm:rowsOf('rm'),tc:rowsOf('tc'),bt:rowsOf('bt')});gsm('Đang gửi...');
+ try{const r=await fetch(gs.url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body});gsm((await r.text()).slice(0,200)+' · '+new Date().toLocaleTimeString('vi-VN'))}
+ catch(x){try{await fetch(gs.url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body});gsm('Đã gửi lúc '+new Date().toLocaleTimeString('vi-VN')+' (trình duyệt không đọc được phản hồi, hãy mở Sheet kiểm tra lần đầu).')}catch(y){gsm('Lỗi gửi: '+y.message)}}}
+$('gsgo').onclick=gsSend;
+{const old=st.set;let tmo;st.set=function(k,v){old.call(st,k,v);if(gs.auto&&gs.url&&['nt2_rooms','nt2_tc','nt2_bt','nt3_g'].indexOf(k)>=0){clearTimeout(tmo);tmo=setTimeout(gsSend,4000)}}}
 </script></body></html>
