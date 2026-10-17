@@ -60,7 +60,7 @@ tr.s td{color:var(--g);font-size:14px}
 .qt{font-size:10px;letter-spacing:.18em;color:var(--g);text-transform:uppercase;margin:22px 0 6px}
 @media(max-width:900px){.studio,.two{grid-template-columns:1fr}#stage{height:56vh;min-height:360px}}
 </style></head><body>
-<header><h1>NHÀ TRỌ CAO CẤP</h1><nav id="nav"><button class="on" data-t="sd">Phối cảnh 3D &amp; dự toán</button><button data-t="sp">Phòng &amp; khách thuê</button><button data-t="st">Thu chi</button><button data-t="sk">Lợi nhuận &amp; thuế</button><button data-t="sb">Bảo trì &amp; thủ tục</button><button data-t="sg">Google &amp; nhắc việc</button><button data-t="sy">Đồng bộ nhiều máy</button></nav></header>
+<header><h1>NHÀ TRỌ CAO CẤP</h1><nav id="nav"><button class="on" data-t="sd">Phối cảnh 3D &amp; dự toán</button><button data-t="sp">Phòng &amp; khách thuê</button><button data-t="st">Thu chi</button><button data-t="sk">Lợi nhuận &amp; thuế</button><button data-t="sb">Bảo trì &amp; thủ tục</button><button data-t="sg">Google &amp; nhắc việc</button><button data-t="sy">Đồng bộ nhiều máy</button></nav><span id="gsb" style="color:var(--m);font-size:12px"></span></header>
 <main>
 <section class="tab on" id="sd">
 <p class="lead">Nhập thông số, mô hình 3D dựng lại ngay: lưới phòng, số ô nhà xe, chiều cao, sân trước, xe máy dưới cầu thang. Bảng khối lượng và dự toán bên dưới tính theo cùng số liệu.</p>
@@ -117,7 +117,7 @@ tr.s td{color:var(--g);font-size:14px}
 <button class="b" data-cp="rm">Sao chép bảng Phòng</button><button class="b" data-cp="tc">Sao chép bảng Thu chi</button><button class="b" data-cp="bt">Sao chép bảng Bảo trì</button>
 <p class="info" id="cpmsg">Bấm một nút, mở tab tương ứng trong Sheet, chọn ô A5 (Phòng), A3 (Thu chi) hoặc A5 (Bảo trì) rồi dán. Bỏ dòng mẫu cũ trước khi dán.</p>
 <h3>Bản sao lưu trên máy</h3>
-<button class="b" id="bk">Tải bản sao lưu (.json)</button><label class="b" style="display:inline-block;color:var(--t)">Khôi phục từ file<input id="rs" type="file" accept=".json,application/json" style="display:none"></label>
+<button class="b" id="bk">Tải bản sao lưu (.json)</button><label class="b" style="display:inline-block;color:var(--t)">Khôi phục từ file<input id="rsf" type="file" accept=".json,application/json" style="display:none"></label>
 <h3>Nhắc việc</h3>
 <button class="b" id="ics">Tải file nhắc việc (.ics)</button>
 <p class="info">Trong Google Calendar: Cài đặt, Nhập và xuất, chọn file .ics. Mỗi sự kiện có thông báo trước theo số ngày ở trên.</p>
@@ -387,9 +387,13 @@ const IN=[['oth','Hoàn thiện + nội thất + thủ tục (triệu đ)',400],
 let iv=Object.assign(Object.fromEntries(IN.map(a=>[a[0],a[2]])),st.get('nt2_iv',{}));
 $('inv').innerHTML=IN.map(a=>`<label>${a[1]}<input data-k="${a[0]}" type="number" value="${iv[a[0]]}"></label>`).join('');
 $('inv').onchange=e=>{iv[e.target.dataset.k]=+e.target.value;st.set('nt2_iv',iv);invest()};
+function rentExtra(){const cm=new Date().toISOString().slice(0,7),h={},b={};
+ tcl.get().forEach(x=>{if(x.loai=='Thu'&&/^Tiền phòng/.test(x.hm)){const k=(x.ngay||'').slice(0,7);b[k]=(b[k]||0)+x.tien}});
+ rooms.get().filter(r=>r.tt=='Đã thuê'&&r.vao).forEach(r=>{let[y,mo]=r.vao.slice(0,7).split('-').map(Number);for(let n=0;n<600&&y&&mo;n++){const k=y+'-'+String(mo).padStart(2,'0');if(k>cm||(r.het&&k>r.het.slice(0,7)))break;h[k]=(h[k]||0)+r.gia;if(++mo>12){mo=1;y++}}});
+ return Object.keys(h).reduce((a,k)=>a+Math.max(0,h[k]-(b[k]||0)),0)}
 function invest(){const r=rooms.get(),cap=TOT+iv.oth*1e6,rev=(r.reduce((a,x)=>a+x.gia,0)*iv.occ/100+iv.xe)*12,op=rev*iv.op/100,mt=cap*iv.mt/100,tx=rev*iv.tax/100,pf=rev-op-mt-tx;
- const tc=tcl.get(),thu=tc.filter(x=>x.loai=='Thu').reduce((a,x)=>a+x.tien,0),chi=tc.filter(x=>x.loai=='Chi').reduce((a,x)=>a+x.tien,0);
- const cd=[['Vốn đầu tư dự kiến',F(cap)+' đ'],['Doanh thu / năm',F(rev)+' đ'],['Vận hành / năm',F(op)+' đ'],['Bảo trì / năm',F(mt)+' đ'],['Thuế / năm',F(tx)+' đ'],['Lợi nhuận / năm',F(pf)+' đ'],['Lợi nhuận / tháng',F(pf/12)+' đ'],['Lợi suất / vốn',N(cap?pf/cap*100:0)+' %'],['Hoàn vốn',pf>0?N(cap/pf)+' năm':'Chưa có lãi'],['Thực thu (sổ thu chi)',F(thu)+' đ'],['Thực chi (sổ thu chi)',F(chi)+' đ'],['Thuế tạm tính trên thực thu',F(thu*iv.tax/100)+' đ']];
+ const tc=tcl.get(),thu=tc.filter(x=>x.loai=='Thu').reduce((a,x)=>a+x.tien,0)+rentExtra(),chi=tc.filter(x=>x.loai=='Chi').reduce((a,x)=>a+x.tien,0);
+ const cd=[['Vốn đầu tư dự kiến',F(cap)+' đ'],['Doanh thu / năm',F(rev)+' đ'],['Vận hành / năm',F(op)+' đ'],['Bảo trì / năm',F(mt)+' đ'],['Thuế / năm',F(tx)+' đ'],['Lợi nhuận / năm',F(pf)+' đ'],['Lợi nhuận / tháng',F(pf/12)+' đ'],['Lợi suất / vốn',N(cap?pf/cap*100:0)+' %'],['Hoàn vốn',pf>0?N(cap/pf)+' năm':'Chưa có lãi'],['Thực thu (sổ + tiền phòng theo hợp đồng)',F(thu)+' đ'],['Thực chi (sổ thu chi)',F(chi)+' đ'],['Thuế tạm tính trên thực thu',F(thu*iv.tax/100)+' đ']];
  $('out').innerHTML=cd.map(c=>`<div class="card">${c[0]}<b>${c[1]}</b></div>`).join('')}
 const btl=LM('bt','nt2_bt',[['hm','Hạng mục','text'],['kv','Khu vực','text'],['ck','Chu kỳ','s',['Tháng','Quý','6 tháng','Năm']],['cuoi','Lần cuối','date'],['tt','Trạng thái','s',['Cần làm','Đã làm']],['cp','Chi phí (đ)','number']],
  [['Kiểm tra chống thấm mái, sàn hông','Mái, hành lang','Năm'],['Kiểm tra bình chữa cháy, đèn thoát hiểm','Toàn nhà','Quý'],['Kiểm tra điện, aptomat từng phòng','Các phòng','6 tháng'],['Hút hầm cầu, thông ống thoát nước','Khu WC','Năm'],['Sơn lại, vá tường nứt','Mặt tiền, cầu thang','Năm']].map(a=>({hm:a[0],kv:a[1],ck:a[2],cuoi:'',tt:'Cần làm',cp:0})));
@@ -463,9 +467,9 @@ $('fbout').onclick=()=>{live=false;try{dbr&&dbr.off();firebase.auth().signOut()}
 $('rm').addEventListener('input',e=>{const t=e.target;if(t.dataset.k!=='khach')return;const i=t.dataset.i,r=rooms.get()[i];if(!r)return;const want=t.value.trim()?'Đã thuê':'Trống';
  if(r.tt!==want){r.tt=want;rooms.save();const sel=$('rm').querySelector('select[data-i="'+i+'"][data-k="tt"]');if(sel)sel.value=want}});
 /* ===== đồng bộ Google Sheet qua Apps Script ===== */
-let gs=Object.assign({url:'',tok:'',auto:false},st.get('nt3_gs',{}));$('gsu').value=gs.url;$('gst').value=gs.tok;$('gsa').checked=gs.auto;
-const gsm=m=>$('gsm').textContent=m,rowsOf=k=>TB[k]().split('\n').filter(Boolean).map(l=>l.split('\t'));
-function gsSave(){gs={url:$('gsu').value.trim(),tok:$('gst').value,auto:$('gsa').checked};st.set('nt3_gs',gs)}
+let gs=Object.assign({url:'',tok:'',auto:true},st.get('nt3_gs',{}));if(!gs.v){gs.auto=true;gs.v=2}$('gsu').value=gs.url;$('gst').value=gs.tok;$('gsa').checked=gs.auto;
+const gsm=m=>{$('gsm').textContent=m;$('gsb').textContent='Google Sheet: '+m.slice(0,70)},rowsOf=k=>TB[k]().split('\n').filter(Boolean).map(l=>l.split('\t'));
+function gsSave(){gs={url:$('gsu').value.trim(),tok:$('gst').value,auto:$('gsa').checked,v:2};st.set('nt3_gs',gs)}
 ['gsu','gst'].forEach(i=>$(i).oninput=gsSave);$('gsa').onchange=()=>{gsSave();if(gs.auto)gsSend()};
 async function gsSend(){gsSave();if(!gs.url||!gs.tok){gsm('Cần nhập đường dẫn và mật khẩu.');return}
  const body=JSON.stringify({token:gs.tok,rm:rowsOf('rm'),tc:rowsOf('tc'),bt:rowsOf('bt')});gsm('Đang gửi...');
@@ -473,4 +477,24 @@ async function gsSend(){gsSave();if(!gs.url||!gs.tok){gsm('Cần nhập đườn
  catch(x){try{await fetch(gs.url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body});gsm('Đã gửi lúc '+new Date().toLocaleTimeString('vi-VN')+' (trình duyệt không đọc được phản hồi, hãy mở Sheet kiểm tra lần đầu).')}catch(y){gsm('Lỗi gửi: '+y.message)}}}
 $('gsgo').onclick=gsSend;
 {const old=st.set;let tmo;st.set=function(k,v){old.call(st,k,v);if(gs.auto&&gs.url&&['nt2_rooms','nt2_tc','nt2_bt','nt3_g'].indexOf(k)>=0){clearTimeout(tmo);tmo=setTimeout(gsSend,4000)}}}
+</script><script>
+$('bill').addEventListener('click',()=>setTimeout(()=>{if(gs.url&&gs.tok)gsSend()},700));
+$('gsb').textContent=(!gs.url||!gs.tok)?'Google Sheet: chưa kết nối (tab Google & nhắc việc)':'Google Sheet: tự đồng bộ khi có thay đổi';
+invest();
+</script><script>
+/* ===== sao lưu / khôi phục: có thông báo, chọn lại cùng file được, đẩy lên mạng và Sheet trước khi tải lại ===== */
+$('bk').onclick=()=>{const o={ver:3,at:new Date().toISOString(),P,hl,pr,iv,G,rooms:rooms.get(),tc:tcl.get(),bt:btl.get(),td};
+ dl('sao-luu-nha-tro-'+o.at.slice(0,16).replace(/[:T]/g,'-')+'.json',new Blob([JSON.stringify(o,null,1)],{type:'application/json'}));
+ $('cpmsg').textContent='Đã tải bản sao lưu lúc '+new Date().toLocaleTimeString('vi-VN')+': '+o.rooms.length+' phòng, '+o.tc.length+' khoản thu chi, '+o.bt.length+' việc bảo trì. Kiểm tra thư mục Tải xuống.'};
+$('rsf').onchange=async e=>{const f=e.target.files[0];if(!f)return;
+ try{const o=JSON.parse(await f.text());if(!o||!Array.isArray(o.rooms))throw 0;
+  if(!confirm('Khôi phục từ file '+f.name+'?\nSẽ thay dữ liệu trên máy này bằng '+o.rooms.length+' phòng, '+(o.tc||[]).length+' khoản thu chi, '+(o.bt||[]).length+' việc bảo trì.')){e.target.value='';return}
+  const M={nt3_p:'P',nt2_hl:'hl',nt2_pr:'pr',nt2_iv:'iv',nt3_g:'G',nt2_rooms:'rooms',nt2_tc:'tc',nt2_bt:'bt',nt2_td:'td'};
+  Object.keys(M).forEach(k=>{if(o[M[k]]!==undefined)try{localStorage.setItem(k,JSON.stringify(o[M[k]]))}catch(x){}});
+  $('cpmsg').textContent='Đang khôi phục...';
+  if(live&&dbr)await Promise.all(KEYS.filter(k=>M[k]&&o[M[k]]!==undefined).map(k=>dbr.child(k).set(o[M[k]])));
+  if(gs.url&&gs.tok)await gsSend();
+  alert('Đã khôi phục: '+o.rooms.length+' phòng, '+(o.tc||[]).length+' khoản thu chi. Trang sẽ tải lại.');location.reload()
+ }catch(x){$('cpmsg').textContent='File sao lưu không đọc được hoặc không đúng định dạng.'}
+ e.target.value=''};
 </script></body></html>
