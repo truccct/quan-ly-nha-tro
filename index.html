@@ -117,7 +117,7 @@ tr.s td{color:var(--g);font-size:14px}
 <button class="b" data-cp="rm">Sao chép bảng Phòng</button><button class="b" data-cp="tc">Sao chép bảng Thu chi</button><button class="b" data-cp="bt">Sao chép bảng Bảo trì</button>
 <p class="info" id="cpmsg">Bấm một nút, mở tab tương ứng trong Sheet, chọn ô A5 (Phòng), A3 (Thu chi) hoặc A5 (Bảo trì) rồi dán. Bỏ dòng mẫu cũ trước khi dán.</p>
 <h3>Bản sao lưu trên máy</h3>
-<button class="b" id="bk">Tải bản sao lưu (.json)</button><label class="b" style="display:inline-block;color:var(--t)">Khôi phục từ file<input id="rsf" type="file" accept=".json,application/json" style="display:none"></label>
+<button class="b" id="bk">Tải bản sao lưu (.json)</button><label class="b" style="display:inline-block;color:var(--t)">Khôi phục từ file<input id="rsf" type="file" accept=".json,application/json" style="display:none"></label><button class="b" id="undo">Hoàn tác lần khôi phục gần nhất</button>
 <h3>Nhắc việc</h3>
 <button class="b" id="ics">Tải file nhắc việc (.ics)</button>
 <p class="info">Trong Google Calendar: Cài đặt, Nhập và xuất, chọn file .ics. Mỗi sự kiện có thông báo trước theo số ngày ở trên.</p>
@@ -417,7 +417,6 @@ const TB={
 function copyText(t){return(navigator.clipboard&&navigator.clipboard.writeText?navigator.clipboard.writeText(t):Promise.reject()).catch(()=>{const a=document.createElement('textarea');a.value=t;document.body.appendChild(a);a.select();let ok=false;try{ok=document.execCommand('copy')}catch(e){}a.remove();if(!ok)throw 0})}
 document.querySelectorAll('[data-cp]').forEach(b=>b.onclick=()=>{const t=TB[b.dataset.cp]();copyText(t).then(()=>{$('cpmsg').textContent='Đã sao chép '+(t?t.split('\n').length:0)+' dòng. Dán vào tab tương ứng trong Google Sheet.'},()=>{$('cpmsg').textContent='Trình duyệt chặn sao chép. Thử mở file bằng Chrome hoặc Edge.'})});
 $('bk').onclick=()=>{const o={ver:3,at:new Date().toISOString(),P,hl,pr,iv,G,rooms:rooms.get(),tc:tcl.get(),bt:btl.get(),td};dl('sao-luu-nha-tro-'+o.at.slice(0,10)+'.json',new Blob([JSON.stringify(o,null,1)],{type:'application/json'}))};
-$('rs').onchange=e=>{const f=e.target.files[0];if(!f)return;f.text().then(t=>{const o=JSON.parse(t);const put=(k,v)=>st.set(k,v);put('nt3_p',o.P);put('nt2_hl',o.hl);put('nt2_pr',o.pr);put('nt2_iv',o.iv);put('nt3_g',o.G);put('nt2_rooms',o.rooms);put('nt2_tc',o.tc);put('nt2_bt',o.bt);put('nt2_td',o.td);setTimeout(()=>location.reload(),900)}).catch(()=>{$('cpmsg').textContent='File sao lưu không đọc được.'})};
 const addM=(d,m)=>{const x=new Date(d+'T00:00:00Z');x.setUTCMonth(x.getUTCMonth()+m);return x.toISOString().slice(0,10)};
 function reminders(){const out=[];rooms.get().forEach(r=>{if(r.tt==='Đã thuê'&&r.het)out.push({d:r.het,t:'Hết hạn hợp đồng '+r.ten+(r.khach?' – '+r.khach:''),lead:G.hd,k:'Hợp đồng'})});
  btl.get().forEach(r=>{const m={'Tháng':1,'Quý':3,'6 tháng':6,'Năm':12}[r.ck];if(r.cuoi&&m)out.push({d:addM(r.cuoi,m),t:'Bảo trì: '+r.hm,lead:G.bt,k:'Bảo trì'})});
@@ -488,8 +487,9 @@ $('bk').onclick=()=>{const o={ver:3,at:new Date().toISOString(),P,hl,pr,iv,G,roo
  $('cpmsg').textContent='Đã tải bản sao lưu lúc '+new Date().toLocaleTimeString('vi-VN')+': '+o.rooms.length+' phòng, '+o.tc.length+' khoản thu chi, '+o.bt.length+' việc bảo trì. Kiểm tra thư mục Tải xuống.'};
 $('rsf').onchange=async e=>{const f=e.target.files[0];if(!f)return;
  try{const o=JSON.parse(await f.text());if(!o||!Array.isArray(o.rooms))throw 0;
-  if(!confirm('Khôi phục từ file '+f.name+'?\nSẽ thay dữ liệu trên máy này bằng '+o.rooms.length+' phòng, '+(o.tc||[]).length+' khoản thu chi, '+(o.bt||[]).length+' việc bảo trì.')){e.target.value='';return}
+  if(!confirm('Khôi phục từ file '+f.name+(o.at?' (sao lưu lúc '+new Date(o.at).toLocaleString('vi-VN')+')':'')+'?\nSẽ thay dữ liệu trên máy này bằng '+o.rooms.length+' phòng, '+(o.tc||[]).length+' khoản thu chi, '+(o.bt||[]).length+' việc bảo trì.')){e.target.value='';return}
   const M={nt3_p:'P',nt2_hl:'hl',nt2_pr:'pr',nt2_iv:'iv',nt3_g:'G',nt2_rooms:'rooms',nt2_tc:'tc',nt2_bt:'bt',nt2_td:'td'};
+  try{localStorage.setItem('nt3_undo',JSON.stringify({at:new Date().toISOString(),P,hl,pr,iv,G,rooms:rooms.get(),tc:tcl.get(),bt:btl.get(),td}))}catch(x){}
   Object.keys(M).forEach(k=>{if(o[M[k]]!==undefined)try{localStorage.setItem(k,JSON.stringify(o[M[k]]))}catch(x){}});
   $('cpmsg').textContent='Đang khôi phục...';
   if(live&&dbr)await Promise.all(KEYS.filter(k=>M[k]&&o[M[k]]!==undefined).map(k=>dbr.child(k).set(o[M[k]])));
@@ -497,4 +497,20 @@ $('rsf').onchange=async e=>{const f=e.target.files[0];if(!f)return;
   alert('Đã khôi phục: '+o.rooms.length+' phòng, '+(o.tc||[]).length+' khoản thu chi. Trang sẽ tải lại.');location.reload()
  }catch(x){$('cpmsg').textContent='File sao lưu không đọc được hoặc không đúng định dạng.'}
  e.target.value=''};
+</script><script>
+$('undo').onclick=async()=>{let u=null;try{u=JSON.parse(localStorage.getItem('nt3_undo'))}catch(x){}
+ if(!u||!Array.isArray(u.rooms)){alert('Chưa có bản nào để hoàn tác. Bản này được lưu tự động ngay trước mỗi lần khôi phục từ file.');return}
+ if(!confirm('Quay lại dữ liệu lúc '+new Date(u.at).toLocaleString('vi-VN')+' (trước lần khôi phục gần nhất): '+u.rooms.length+' phòng, '+(u.tc||[]).length+' khoản thu chi?'))return;
+ const M={nt3_p:'P',nt2_hl:'hl',nt2_pr:'pr',nt2_iv:'iv',nt3_g:'G',nt2_rooms:'rooms',nt2_tc:'tc',nt2_bt:'bt',nt2_td:'td'};
+ Object.keys(M).forEach(k=>{if(u[M[k]]!==undefined)try{localStorage.setItem(k,JSON.stringify(u[M[k]]))}catch(x){}});
+ if(live&&dbr)await Promise.all(KEYS.filter(k=>M[k]&&u[M[k]]!==undefined).map(k=>dbr.child(k).set(u[M[k]])));
+ if(gs.url&&gs.tok)await gsSend();location.reload()};
+</script><script>
+/* ===== số phiên bản + tự báo khi GitHub có bản mới hơn ===== */
+const APP_VER='2026-10-18-r8';
+$('gsb').insertAdjacentHTML('afterend',' <span id="ver" style="color:var(--m);font-size:12px">· phiên bản '+APP_VER+'</span>');
+async function chkVer(){try{const r=await fetch(location.pathname+'?_='+Date.now(),{cache:'no-store'});if(!r.ok)return;const m=/APP_VER\s*=\s*'([^']+)'/.exec(await r.text());
+ if(m&&m[1]!==APP_VER&&!$('newv')){const d=document.createElement('div');d.id='newv';d.style.cssText='position:fixed;left:0;right:0;top:0;z-index:99;background:#d4a24c;color:#0b1630;padding:10px;text-align:center';
+  d.innerHTML='Có bản mới hơn ('+m[1]+'). <button class="b" style="color:#0b1630;border-color:#0b1630">Tải lại bản mới</button>';d.querySelector('button').onclick=()=>{location.href=location.pathname+'?v='+Date.now()};document.body.appendChild(d)}}catch(x){}}
+chkVer();setInterval(chkVer,300000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)chkVer()});
 </script></body></html>
