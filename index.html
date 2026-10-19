@@ -463,7 +463,8 @@ async function start(label){dbr=firebase.database().ref('nhatro');
  for(const k of KEYS){const snap=await dbr.child(k).get();if(snap.exists()){const v=snap.val();try{localStorage.setItem(k,JSON.stringify(v))}catch(x){}apply(k,v)}else{const l=localStorage.getItem(k);if(l)await dbr.child(k).set(JSON.parse(l))}}
  live=true;KEYS.forEach(k=>dbr.child(k).on('value',s=>{const v=s.val();if(v==null)return;if(JSON.stringify(v)==localStorage.getItem(k))return;try{localStorage.setItem(k,JSON.stringify(v))}catch(x){}pend[k]=v;flush()}));
  fbs('Đã kết nối'+(label?' ('+label+')':'')+'. Thay đổi trên máy này tự cập nhật sang các máy khác.')}
-async function go(reg){try{const cfg=JSON.parse($('fbc').value);st.set('nt3_fbc',cfg);await lib();if(!firebase.apps.length)firebase.initializeApp(cfg);const a=firebase.auth(),e=$('fbe').value,p=$('fbp').value;
+function parseCfg(t){try{return JSON.parse(t)}catch(e){}const o={};String(t).replace(/([A-Za-z]+)\s*:\s*["']([^"']*)["']/g,(m,k,v)=>{o[k]=v});if(!o.apiKey||!o.databaseURL)throw new Error('Thiếu apiKey hoặc databaseURL trong firebaseConfig');return o}
+async function go(reg){try{const cfg=parseCfg($('fbc').value);st.set('nt3_fbc',cfg);await lib();if(!firebase.apps.length)firebase.initializeApp(cfg);const a=firebase.auth(),e=$('fbe').value,p=$('fbp').value;
  reg?await a.createUserWithEmailAndPassword(e,p):await a.signInWithEmailAndPassword(e,p);await start(e)}catch(x){fbs('Lỗi: '+(x.message||x))}}
 $('fbgo').onclick=()=>go(false);$('fbreg').onclick=()=>go(true);
 $('fbout').onclick=()=>{live=false;try{dbr&&dbr.off();firebase.auth().signOut()}catch(x){}fbs('Đã ngắt kết nối.')};
@@ -515,7 +516,7 @@ $('undo').onclick=async()=>{let u=null;try{u=JSON.parse(localStorage.getItem('nt
  if(gs.url&&gs.tok)await gsSend();location.reload()};
 </script><script>
 /* ===== số phiên bản + tự báo khi GitHub có bản mới hơn ===== */
-const APP_VER='2026-10-19-r14';
+const APP_VER='2026-10-19-r15';
 $('gsb').insertAdjacentHTML('afterend',' <span id="ver" style="color:var(--m);font-size:12px">· phiên bản '+APP_VER+'</span>');
 async function chkVer(){try{const r=await fetch(location.pathname+'?_='+Date.now(),{cache:'no-store'});if(!r.ok)return;const m=/APP_VER\s*=\s*'([^']+)'/.exec(await r.text());
  if(m&&m[1]!==APP_VER&&!$('newv')){const d=document.createElement('div');d.id='newv';d.style.cssText='position:fixed;left:0;right:0;top:0;z-index:99;background:#d4a24c;color:#0b1630;padding:10px;text-align:center';
