@@ -1,4 +1,8 @@
-<!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<!doctype html><html lang="vi"><head><script>
+(function(){var n=0;function show(m){if(n++>2)return;var d=document.createElement('div');d.style.cssText='position:fixed;left:0;right:0;bottom:0;z-index:9999;background:#b3261e;color:#fff;padding:8px 12px;font:12px monospace;white-space:pre-wrap';d.textContent='Lỗi trang: '+m+'  (chụp màn hình gửi Claude)';(document.body||document.documentElement).appendChild(d)}
+addEventListener('error',function(e){if(e.message)show(e.message+(e.lineno?' [dòng '+e.lineno+']':''))},true);
+addEventListener('unhandledrejection',function(e){show('Promise: '+((e.reason&&e.reason.message)||e.reason))})})();
+</script><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Nhà trọ cao cấp – 3D, dự toán, quản lý</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
@@ -117,7 +121,7 @@ tr.s td{color:var(--g);font-size:14px}
 <button class="b" data-cp="rm">Sao chép bảng Phòng</button><button class="b" data-cp="tc">Sao chép bảng Thu chi</button><button class="b" data-cp="bt">Sao chép bảng Bảo trì</button>
 <p class="info" id="cpmsg">Bấm một nút, mở tab tương ứng trong Sheet, chọn ô A5 (Phòng), A3 (Thu chi) hoặc A5 (Bảo trì) rồi dán. Bỏ dòng mẫu cũ trước khi dán.</p>
 <h3>Bản sao lưu trên máy</h3>
-<button class="b" id="bk">Tải bản sao lưu (.json)</button><label class="b" style="display:inline-block;color:var(--t)">Khôi phục từ file<input id="rsf" type="file" accept=".json,application/json" style="display:none"></label><button class="b" id="undo">Hoàn tác lần khôi phục gần nhất</button>
+<button class="b" id="bk">Tải bản sao lưu (.json)</button><label class="b" style="display:inline-block;color:var(--t)">Khôi phục từ file<input id="rsf" type="file" accept=".json,application/json" style="display:none"></label><button class="b" id="undo">Hoàn tác lần khôi phục gần nhất</button><details id="bkd" style="margin-top:8px"><summary style="cursor:pointer;color:var(--g)">Không tải được file? Dùng nội dung dự phòng (sao chép / dán)</summary><p class="note">Bấm “Tải bản sao lưu” trước, nội dung sẽ hiện ở ô dưới. Sao chép rồi dán vào Ghi chú hoặc Zalo của bạn. Để khôi phục, dán lại vào ô này rồi bấm nút Khôi phục.</p><textarea id="bkt" rows="6" style="width:100%;background:var(--p);color:var(--t);border:1px solid var(--l);font:inherit" placeholder="Nội dung sao lưu (JSON)"></textarea><br><button class="b" id="bkc">Sao chép</button><button class="b" id="bkr">Khôi phục từ nội dung dán</button></details>
 <h3>Nhắc việc</h3>
 <button class="b" id="ics">Tải file nhắc việc (.ics)</button>
 <p class="info">Trong Google Calendar: Cài đặt, Nhập và xuất, chọn file .ics. Mỗi sự kiện có thông báo trước theo số ngày ở trên.</p>
@@ -381,8 +385,9 @@ const tcl=LM('tc','nt2_tc',[['ngay','Ngày','date'],['loai','Loại','s',['Thu',
 $('addtc').onclick=()=>tcl.add({ngay:new Date().toISOString().slice(0,10),loai:'Chi',hm:'',tien:0,gc:''});
 function month(){const m={},cm=new Date().toISOString().slice(0,7),z=()=>({t:0,c:0,b:0,h:0});
  tcl.get().forEach(x=>{const k=(x.ngay||'').slice(0,7)||'Chưa có ngày';m[k]=m[k]||z();if(x.loai=='Thu'){m[k].t+=x.tien;if(/^Tiền phòng/.test(x.hm))m[k].b+=x.tien}else m[k].c+=x.tien});
+ btl.get().forEach(x=>{if(x.tt==='Đã làm'&&x.cp>0){const k=(x.cuoi||'').slice(0,7)||new Date().toISOString().slice(0,7);m[k]=m[k]||z();m[k].c+=x.cp}});
  rooms.get().filter(r=>r.tt=='Đã thuê'&&r.vao).forEach(r=>{let[y,mo]=r.vao.slice(0,7).split('-').map(Number);for(let n=0;n<600&&y&&mo;n++){const k=y+'-'+String(mo).padStart(2,'0');if(k>cm||(r.het&&k>r.het.slice(0,7)))break;m[k]=m[k]||z();m[k].h+=r.gia;if(++mo>12){mo=1;y++}}});
- $('tm').innerHTML='<tr><th>Tháng</th><th class="r">Thu ghi sổ</th><th class="r">Tiền phòng theo hợp đồng, chưa ghi sổ</th><th class="r">Chi</th><th class="r">Lãi/lỗ</th></tr>'+Object.keys(m).sort().reverse().map(k=>{const v=m[k],ex=Math.max(0,v.h-v.b);return`<tr><td>${k}</td><td class="r">${F(v.t)}</td><td class="r">${F(ex)}</td><td class="r">${F(v.c)}</td><td class="r">${F(v.t+ex-v.c)}</td></tr>`}).join('')+'<tr><td colspan="5" style="color:var(--m)">Phòng “Đã thuê” được tính trọn tháng từ tháng bắt đầu đến tháng hiện tại (hoặc đến khi hết hạn). Bấm “Chốt hóa đơn tháng” ở tab Phòng để ghi thu thật vào sổ.</td></tr>'}
+ $('tm').innerHTML='<tr><th>Tháng</th><th class="r">Thu ghi sổ</th><th class="r">Tiền phòng theo hợp đồng, chưa ghi sổ</th><th class="r">Chi (gồm bảo trì)</th><th class="r">Lãi/lỗ</th></tr>'+Object.keys(m).sort().reverse().map(k=>{const v=m[k],ex=Math.max(0,v.h-v.b);return`<tr><td>${k}</td><td class="r">${F(v.t)}</td><td class="r">${F(ex)}</td><td class="r">${F(v.c)}</td><td class="r">${F(v.t+ex-v.c)}</td></tr>`}).join('')+'<tr><td colspan="5" style="color:var(--m)">Phòng “Đã thuê” được tính trọn tháng từ tháng bắt đầu đến tháng hiện tại (hoặc đến khi hết hạn). Bấm “Chốt hóa đơn tháng” ở tab Phòng để ghi thu thật vào sổ. Việc bảo trì “Đã làm” có chi phí được tính vào Chi theo tháng của Lần cuối, đừng nhập trùng ở sổ thu chi.</td></tr>'}
 const IN=[['oth','Hoàn thiện + nội thất + thủ tục (triệu đ)',400],['occ','Tỷ lệ lấp đầy dự kiến (%)',90],['xe','Thu nhà xe / tháng (đ)',0],['op','Chi phí vận hành (% doanh thu)',15],['mt','Bảo trì (% vốn / năm)',1.5],['tax','Thuế giả định (% doanh thu)',10]];
 let iv=Object.assign(Object.fromEntries(IN.map(a=>[a[0],a[2]])),st.get('nt2_iv',{}));
 $('inv').innerHTML=IN.map(a=>`<label>${a[1]}<input data-k="${a[0]}" type="number" value="${iv[a[0]]}"></label>`).join('');
@@ -391,9 +396,10 @@ function rentExtra(){const cm=new Date().toISOString().slice(0,7),h={},b={};
  tcl.get().forEach(x=>{if(x.loai=='Thu'&&/^Tiền phòng/.test(x.hm)){const k=(x.ngay||'').slice(0,7);b[k]=(b[k]||0)+x.tien}});
  rooms.get().filter(r=>r.tt=='Đã thuê'&&r.vao).forEach(r=>{let[y,mo]=r.vao.slice(0,7).split('-').map(Number);for(let n=0;n<600&&y&&mo;n++){const k=y+'-'+String(mo).padStart(2,'0');if(k>cm||(r.het&&k>r.het.slice(0,7)))break;h[k]=(h[k]||0)+r.gia;if(++mo>12){mo=1;y++}}});
  return Object.keys(h).reduce((a,k)=>a+Math.max(0,h[k]-(b[k]||0)),0)}
+function btCost(){try{return btl.get().filter(x=>x.tt==='Đã làm'&&x.cp>0).reduce((a,x)=>a+x.cp,0)}catch(e){return 0}}
 function invest(){const r=rooms.get(),cap=TOT+iv.oth*1e6,rev=(r.reduce((a,x)=>a+x.gia,0)*iv.occ/100+iv.xe)*12,op=rev*iv.op/100,mt=cap*iv.mt/100,tx=rev*iv.tax/100,pf=rev-op-mt-tx;
- const tc=tcl.get(),thu=tc.filter(x=>x.loai=='Thu').reduce((a,x)=>a+x.tien,0)+rentExtra(),chi=tc.filter(x=>x.loai=='Chi').reduce((a,x)=>a+x.tien,0);
- const cd=[['Vốn đầu tư dự kiến',F(cap)+' đ'],['Doanh thu / năm',F(rev)+' đ'],['Vận hành / năm',F(op)+' đ'],['Bảo trì / năm',F(mt)+' đ'],['Thuế / năm',F(tx)+' đ'],['Lợi nhuận / năm',F(pf)+' đ'],['Lợi nhuận / tháng',F(pf/12)+' đ'],['Lợi suất / vốn',N(cap?pf/cap*100:0)+' %'],['Hoàn vốn',pf>0?N(cap/pf)+' năm':'Chưa có lãi'],['Thực thu (sổ + tiền phòng theo hợp đồng)',F(thu)+' đ'],['Thực chi (sổ thu chi)',F(chi)+' đ'],['Thuế tạm tính trên thực thu',F(thu*iv.tax/100)+' đ']];
+ const tc=tcl.get(),thu=tc.filter(x=>x.loai=='Thu').reduce((a,x)=>a+x.tien,0)+rentExtra(),chi=tc.filter(x=>x.loai=='Chi').reduce((a,x)=>a+x.tien,0)+btCost();
+ const cd=[['Vốn đầu tư dự kiến',F(cap)+' đ'],['Doanh thu / năm',F(rev)+' đ'],['Vận hành / năm',F(op)+' đ'],['Bảo trì / năm',F(mt)+' đ'],['Thuế / năm',F(tx)+' đ'],['Lợi nhuận / năm',F(pf)+' đ'],['Lợi nhuận / tháng',F(pf/12)+' đ'],['Lợi suất / vốn',N(cap?pf/cap*100:0)+' %'],['Hoàn vốn',pf>0?N(cap/pf)+' năm':'Chưa có lãi'],['Thực thu (sổ + tiền phòng theo hợp đồng)',F(thu)+' đ'],['Thực chi (sổ thu chi + bảo trì)',F(chi)+' đ'],['Lãi/lỗ thực tế (thực thu − thực chi)',F(thu-chi)+' đ'],['Thuế tạm tính trên thực thu',F(thu*iv.tax/100)+' đ']];
  $('out').innerHTML=cd.map(c=>`<div class="card">${c[0]}<b>${c[1]}</b></div>`).join('')}
 const btl=LM('bt','nt2_bt',[['hm','Hạng mục','text'],['kv','Khu vực','text'],['ck','Chu kỳ','s',['Tháng','Quý','6 tháng','Năm']],['cuoi','Lần cuối','date'],['tt','Trạng thái','s',['Cần làm','Đã làm']],['cp','Chi phí (đ)','number']],
  [['Kiểm tra chống thấm mái, sàn hông','Mái, hành lang','Năm'],['Kiểm tra bình chữa cháy, đèn thoát hiểm','Toàn nhà','Quý'],['Kiểm tra điện, aptomat từng phòng','Các phòng','6 tháng'],['Hút hầm cầu, thông ống thoát nước','Khu WC','Năm'],['Sơn lại, vá tường nứt','Mặt tiền, cầu thang','Năm']].map(a=>({hm:a[0],kv:a[1],ck:a[2],cuoi:'',tt:'Cần làm',cp:0})));
@@ -507,10 +513,41 @@ $('undo').onclick=async()=>{let u=null;try{u=JSON.parse(localStorage.getItem('nt
  if(gs.url&&gs.tok)await gsSend();location.reload()};
 </script><script>
 /* ===== số phiên bản + tự báo khi GitHub có bản mới hơn ===== */
-const APP_VER='2026-10-18-r8';
+const APP_VER='2026-10-19-r10';
 $('gsb').insertAdjacentHTML('afterend',' <span id="ver" style="color:var(--m);font-size:12px">· phiên bản '+APP_VER+'</span>');
 async function chkVer(){try{const r=await fetch(location.pathname+'?_='+Date.now(),{cache:'no-store'});if(!r.ok)return;const m=/APP_VER\s*=\s*'([^']+)'/.exec(await r.text());
  if(m&&m[1]!==APP_VER&&!$('newv')){const d=document.createElement('div');d.id='newv';d.style.cssText='position:fixed;left:0;right:0;top:0;z-index:99;background:#d4a24c;color:#0b1630;padding:10px;text-align:center';
   d.innerHTML='Có bản mới hơn ('+m[1]+'). <button class="b" style="color:#0b1630;border-color:#0b1630">Tải lại bản mới</button>';d.querySelector('button').onclick=()=>{location.href=location.pathname+'?v='+Date.now()};document.body.appendChild(d)}}catch(x){}}
 chkVer();setInterval(chkVer,300000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)chkVer()});
+</script><script>
+/* ===== thu chi tự thêm / cập nhật / xóa theo phòng ===== */
+const ym=d=>(d||'').slice(0,7),curM=()=>new Date().toISOString().slice(0,7);
+function tagLegacy(){let c=false;tcl.get().forEach(x=>{if(!x.key&&x.loai=='Thu'){const m=/^(Tiền phòng|Điện nước) – (.*)$/.exec(x.hm||'');if(m){x.key=(m[1]=='Tiền phòng'?'rent':'dn')+'|'+m[2]+'|'+ym(x.ngay);c=true}}});return c}
+function dedupe(ask){const seen={},dups=[];tcl.get().forEach((x,i)=>{if(!x.key)return;if(seen[x.key]!==undefined)dups.push(i);else seen[x.key]=i});
+ if(!dups.length)return 0;if(ask&&!confirm('Có '+dups.length+' khoản thu bị trùng (cùng phòng, cùng tháng, cùng loại). Xóa bớt, giữ lại 1 khoản mỗi loại?'))return 0;
+ const l=tcl.get();dups.reverse().forEach(i=>l.splice(i,1));tcl.save();tcl.redraw();return dups.length}
+function reconcile(){const m=curM(),R=rooms.get(),l=tcl.get();let ch=false;
+ for(let i=l.length-1;i>=0;i--){const x=l[i];if(!x.key||ym(x.ngay)!==m)continue;const q=x.key.split('|'),r=R.find(z=>z.ten===q[1]);if(!r)continue;
+  if(r.tt!=='Đã thuê'){l.splice(i,1);ch=true}else if(q[0]==='rent'&&x.tien!==r.gia){x.tien=r.gia;ch=true}}
+ if(ch){tcl.save();tcl.redraw()}}
+{const _sum=sum;sum=function(){_sum();reconcile()}}
+$('bill').onclick=()=>{const d=new Date().toISOString().slice(0,10),m=d.slice(0,7),pe=+$('pe').value,pw=+$('pw').value;let a=0,u=0;
+ const up=(key,hm,tien,gc)=>{const x=tcl.get().find(q=>q.key===key);if(x){x.tien=tien;x.gc=gc;u++}else{tcl.get().push({ngay:d,loai:'Thu',hm,tien,gc,key});a++}};
+ rooms.get().forEach(x=>{if(x.tt!='Đã thuê')return;up('rent|'+x.ten+'|'+m,'Tiền phòng – '+x.ten,x.gia,x.khach);
+  const dn=Math.max(0,x.dm-x.dc)*pe+Math.max(0,x.nm-x.nc)*pw;if(dn)up('dn|'+x.ten+'|'+m,'Điện nước – '+x.ten,dn,x.khach);x.dc=x.dm;x.nc=x.nm});
+ tcl.save();tcl.redraw();rooms.save();rooms.redraw();alert('Tháng '+m+': thêm '+a+' khoản, cập nhật '+u+' khoản (không tạo trùng).')};
+$('addtc').insertAdjacentHTML('afterend','<p class="note">Khoản thu tạo bằng “Chốt hóa đơn tháng” tự cập nhật khi đổi giá phòng và tự xóa khi phòng chuyển sang Trống (chỉ trong tháng hiện tại). Khoản bạn gõ tay không bị tự đổi.</p>');
+setTimeout(()=>{if(tagLegacy())tcl.save();dedupe(true);reconcile()},800);
+</script><script>
+/* bảo trì đổi thì chi và lợi nhuận cập nhật ngay */
+{const o=st.set;st.set=function(k,v){o.call(st,k,v);if(k==='nt2_bt'){month();invest()}}}
+month();invest();
+</script><script>
+/* sao lưu dự phòng cho iPad/iPhone: sao chép / dán nội dung thay vì tải file */
+{const c=URL.createObjectURL;URL.createObjectURL=b=>{window.__blob=b;return c.call(URL,b)}}
+$('bk').addEventListener('click',()=>setTimeout(async()=>{try{if(window.__blob){$('bkt').value=await window.__blob.text();$('bkd').open=true}}catch(x){}},300));
+$('bkc').onclick=async()=>{const t=$('bkt');t.select();try{await navigator.clipboard.writeText(t.value);alert('Đã sao chép nội dung sao lưu.')}catch(x){document.execCommand('copy')}};
+$('bkr').onclick=()=>{const v=$('bkt').value.trim();if(!v){alert('Chưa có nội dung để khôi phục.');return}
+ try{JSON.parse(v)}catch(x){alert('Nội dung dán không đúng định dạng sao lưu.');return}
+ const dt=new DataTransfer();dt.items.add(new File([v],'noi-dung-dan.json',{type:'application/json'}));$('rsf').files=dt.files;$('rsf').dispatchEvent(new Event('change'))};
 </script></body></html>
