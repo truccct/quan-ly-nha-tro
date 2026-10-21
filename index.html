@@ -64,7 +64,7 @@ tr.s td{color:var(--g);font-size:14px}
 .qt{font-size:10px;letter-spacing:.18em;color:var(--g);text-transform:uppercase;margin:22px 0 6px}
 @media(max-width:900px){.studio,.two{grid-template-columns:1fr}#stage{height:56vh;min-height:360px}}
 </style></head><body>
-<header><h1>NHÀ TRỌ CAO CẤP</h1><nav id="nav"><button class="on" data-t="sd">Phối cảnh 3D &amp; dự toán</button><button data-t="sp">Phòng &amp; khách thuê</button><button data-t="st">Thu chi</button><button data-t="sk">Lợi nhuận &amp; thuế</button><button data-t="sb">Bảo trì &amp; thủ tục</button><button data-t="sc">Công việc</button><button data-t="sv">Dự toán đầu tư</button><button data-t="sh">Hóa đơn</button><button data-t="sg">Google &amp; nhắc việc</button><button data-t="sy">Đồng bộ nhiều máy</button></nav><span id="gsb" style="color:var(--m);font-size:12px"></span></header>
+<header><h1>NHÀ TRỌ CAO CẤP</h1><div id="hbar" style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:6px 0"><span>Nhà đang xem:</span><select id="hsel" style="min-width:110px"></select><button class="b" id="hadd">+ Thêm nhà</button><span id="hmsg" style="color:var(--m);font-size:12px"></span></div><nav id="nav"><button class="on" data-t="sd">Phối cảnh 3D &amp; dự toán</button><button data-t="sp">Phòng &amp; khách thuê</button><button data-t="st">Thu chi</button><button data-t="sk">Lợi nhuận &amp; thuế</button><button data-t="sb">Bảo trì &amp; thủ tục</button><button data-t="sc">Công việc</button><button data-t="sv">Dự toán đầu tư</button><button data-t="sh">Hóa đơn</button><button data-t="sg">Google &amp; nhắc việc</button><button data-t="sy">Đồng bộ nhiều máy</button></nav><span id="gsb" style="color:var(--m);font-size:12px"></span></header>
 <main>
 <section class="tab on" id="sd">
 <p class="lead">Nhập thông số, mô hình 3D dựng lại ngay: lưới phòng, số ô nhà xe, chiều cao, sân trước, xe máy dưới cầu thang. Bảng khối lượng và dự toán bên dưới tính theo cùng số liệu.</p>
@@ -98,6 +98,7 @@ tr.s td{color:var(--g);font-size:14px}
 <div class="qt">Quy ước tính</div><ul class="qu" id="qu"></ul>
 <p class="info">DXF mở được bằng AutoCAD: mặt bằng tầng đang chọn ở ô “Mặt bằng 2D” (mặc định Trệt), đơn vị mm, layer TUONG / TRUC / DIM.</p>
 <div class="two">
+<div id="hlp"><h2>Hành lang và chỗ đậu xe (tính thử)</h2><p class="note">Đổi lựa chọn để xem hành lang cần rộng bao nhiêu, nên làm ban công công-xôn hay thêm cột, và chênh lệch chi phí. Hệ số và đơn giá là ước tính, kỹ sư kết cấu cần tính lại trước khi thi công. Lựa chọn kết cấu ở đây được tính luôn vào bảng khối lượng bên dưới.</p><div class="g"><label>Kết cấu hành lang lầu<select id="hl-kc"><option value="cx">Ban công công-xôn (không thêm cột)</option><option value="cot">Thêm hàng cột mép hành lang</option></select></label><label>Cách đậu xe ở hành lang<select id="hl-pt"><option value="xd">Xe máy đậu dọc hành lang</option><option value="xv">Xe máy đậu vuông góc</option><option value="od">Ô tô đậu dọc hành lang</option></select></label><label>Số xe cần đậu ở hành lang<input id="hl-pn" type="number" min="0" max="6"></label><label>Số phòng liền kề làm chỗ đậu (từ phòng 1)<input id="hl-pp" type="number" min="1" max="4"></label><label>Tổng xe máy cần chỗ (0 = tính theo số phòng)<input id="hl-vm" type="number" min="0" max="60"></label></div><div id="hlo"></div></div>
 <div><h2>Hàm lượng thép</h2><p class="info">kg/m³ bê tông, tham khảo, sửa được.</p><div class="hl" id="steel"></div></div>
 <div><h2>Ra tiền nhanh</h2><p class="note">Đơn giá chỉ để ước tính: giá giả định, sửa theo báo giá của bạn. Chưa gồm đào đất, ốp lát, thiết bị vệ sinh. Không thay thế bóc tách bản vẽ.</p><div class="w"><table id="qk"></table></div></div>
 </div>
@@ -115,7 +116,7 @@ tr.s td{color:var(--g);font-size:14px}
 <section class="tab" id="sg"><h2>Sao lưu Google &amp; nhắc việc</h2>
 <p class="note">Trang này chạy trong trình duyệt nên chưa tự đăng nhập Google. Dữ liệu được xuất đúng cột của Google Sheet “Theo dõi 2 nhà trọ cao cấp” để dán vào, kèm file nhắc việc nhập được vào Google Calendar.</p>
 <div class="row" style="margin:12px 0"><a class="b" style="text-decoration:none" target="_blank" rel="noopener" href="https://docs.google.com/spreadsheets/d/1K-t1dW9aSG_buNL9FSGYpissCmKEiyDYAOUBPPXdOso/edit">Mở Google Sheet</a><a class="b" style="text-decoration:none" target="_blank" rel="noopener" href="https://docs.google.com/document/d/1ET6ERnyQgApdtYkCHj8ThA2XyvMjWkPx_J8erK3MMZo/edit">Mở Google Doc</a><a class="b" style="text-decoration:none" target="_blank" rel="noopener" href="https://calendar.google.com/calendar/u/0/r">Mở Google Calendar</a></div>
-<div class="g"><label>Tên nhà (cột Nhà trong Sheet)<input id="nha" type="text"></label><label>Nhắc hợp đồng hết hạn trước (ngày)<input id="r-hd" type="number"></label><label>Nhắc bảo trì trước (ngày)<input id="r-bt" type="number"></label><label>Nhắc công việc trước (ngày)<input id="r-cv" type="number"></label></div>
+<div class="g"><label>Nhà đang dùng (đổi ở thanh trên cùng)<input id="nha" type="text" readonly></label><label>Nhắc hợp đồng hết hạn trước (ngày)<input id="r-hd" type="number"></label><label>Nhắc bảo trì trước (ngày)<input id="r-bt" type="number"></label><label>Nhắc công việc trước (ngày)<input id="r-cv" type="number"></label></div>
 <h3>Đồng bộ tự động vào Google Sheet</h3>
 <p class="note">Cần làm một lần: mở Google Sheet, Tiện ích mở rộng, Apps Script, dán nội dung file google-apps-script.gs, đổi TOKEN, rồi Triển khai, Ứng dụng web, chạy với quyền của bạn, ai có đường dẫn đều truy cập được. Dán đường dẫn /exec và mật khẩu vào đây. App ghi đè cột nhập liệu của các tab Phòng, Thu chi, Bảo trì; công thức và các tab Dự toán, Tổng hợp giữ nguyên.</p>
 <div class="g"><label>Đường dẫn ứng dụng web (/exec)<input id="gsu" type="text"></label><label>Mật khẩu (TOKEN)<input id="gst" type="password"></label><label><input id="gsa" type="checkbox" style="width:auto"> Tự động đẩy lên Sheet khi có thay đổi</label></div>
@@ -143,10 +144,10 @@ const st={get(k,d){try{return JSON.parse(localStorage.getItem(k))??d}catch(e){re
 const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
 
 /* ================= THÔNG SỐ ================= */
-const P0={D:6,SH:1.2,W:3.2,N:5,G:1,FL:0.6,HF:4.5,HG:2.35,FR:3,TT:150,XE:3,NF:2,gac:true,bep:false};
-const FD=[['D','Rộng đất (m)',5.2,9,.1],['SH','Lối hông (m)',.9,2,.1],['W','Rộng ô (m)',3,4.5,.1],['N','Số ô lưới',2,8,1],['NF','Số tầng',1,5,1],['G','Ô nhà xe trệt',0,2,1],['FL','Cao nền trệt',0,1.2,.05],['HF','Cao tầng (m)',3.6,5,.1],['HG','Cao gác (m)',2,3,.05],['FR','Sân trước (m)',2.5,6,.1],['TT','Vách xây (mm)',100,220,10],['XE','Xe dưới thang',0,3,1]];
+const P0={D:6,SH:1.2,W:3.2,N:5,G:1,FL:0.6,HF:4.5,HG:2.35,FR:3,TT:150,XE:3,NF:2,gac:true,bep:false,KC:'cx',PT:'xd',PN:2,PP:2,VM:0};
+const FD=[['D','Rộng đất (m)',5.2,10,.1],['SH','Lối hông (m)',.9,3.2,.1],['W','Rộng ô (m)',3,4.5,.1],['N','Số ô lưới',2,8,1],['NF','Số tầng',1,5,1],['G','Ô nhà xe trệt',0,2,1],['FL','Cao nền trệt',0,1.2,.05],['HF','Cao tầng (m)',3.6,5,.1],['HG','Cao gác (m)',2,3,.05],['FR','Sân trước (m)',2.5,6,.1],['TT','Vách xây (mm)',100,220,10],['XE','Xe dưới thang',0,3,1]];
 let P=Object.assign({},P0,st.get('nt3_p',{}));
-function norm(){FD.forEach(f=>{P[f[0]]=clamp(+P[f[0]]||P0[f[0]],f[2],f[3])});P.N=Math.round(P.N);P.NF=Math.round(P.NF);P.G=Math.round(P.G);P.XE=Math.round(P.XE);P.G=Math.min(P.G,P.N-1);P.HG=Math.min(P.HG,P.HF-1.8);P.gac=!!P.gac;P.bep=!!P.bep}
+function norm(){FD.forEach(f=>{P[f[0]]=clamp(+P[f[0]]||P0[f[0]],f[2],f[3])});P.N=Math.round(P.N);P.NF=Math.round(P.NF);P.G=Math.round(P.G);P.XE=Math.round(P.XE);P.G=Math.min(P.G,P.N-1);P.HG=Math.min(P.HG,P.HF-1.8);P.gac=!!P.gac;P.bep=!!P.bep;P.KC=P.KC==='cot'?'cot':'cx';P.PT=['xd','xv','od'].indexOf(P.PT)>=0?P.PT:'xd';P.PN=clamp(Math.round(+P.PN||0),0,6);P.PP=clamp(Math.round(+P.PP||1),1,4);P.VM=clamp(Math.round(+P.VM||0),0,60)}
 norm();
 const rooms$=()=>{const NT=P.N-P.G;return{NT,NL:P.N,R:NT+(P.NF-1)*P.N}};
 $('pg').innerHTML=FD.map(f=>`<label>${f[1]}<input id="f-${f[0]}" type="number" min="${f[2]}" max="${f[3]}" step="${f[4]}" value="${P[f[0]]}"></label>`).join('');
@@ -310,6 +311,18 @@ const PR0={bt:1400000,cp:170000,th:18000,x150:290000,tr:130000,ct:200000,son:900
 $('steel').innerHTML=Object.keys(HL0).map(k=>`<label>${HLN[k]}<input data-k="${k}" type="number" value="${hl[k]}"></label>`).join('');
 $('steel').onchange=e=>{hl[e.target.dataset.k]=+e.target.value;st.set('nt2_hl',hl);renderQty()};
 let QROWS=[],QAGG=[],TOT=0;
+function hlRows(KC,SH){const n3=P.N+1,L=P.N*P.W,HF=P.HF,K=P.NF-1,rows=[],add=(n,u,v,k)=>rows.push({n,u,v,k});
+ if(K<1)return rows;
+ if(KC==='cot'){const col=n3*.0484*HF,cc=n3*4*.22*HF,k1=Math.max(K-1,0),giang=L*.06,dam=L*.06*K;
+  add('Bê tông móng, cột, dầm mép hành lang','m3',[n3*.4+giang,col,col*k1+dam,0],'bt');
+  add('Cốp pha móng, cột, dầm mép hành lang','m2',[n3*1.6+L*.6,cc,cc*k1+L*.8*K,0],'cp');
+  add('Cốt thép móng, cột, dầm mép hành lang','kg',[n3*.4*hl.mong+giang*hl.giang,col*hl.cot,col*k1*hl.cot+dam*hl.dam,0],'th')}
+ else if(SH>1.2){const e=(SH-1.2)*.13,ks=12*((SH/1.2)**2-1),A=L*SH*K;
+  add('Bê tông dày thêm sàn công-xôn hành lang','m3',[0,0,A*e,0],'bt');
+  add('Cốt thép gia cường sàn công-xôn hành lang','kg',[0,0,A*ks,0],'th');
+  if(SH>1.5){const d=L*.06*K;add('Bê tông dầm mép công-xôn','m3',[0,0,d,0],'bt');add('Cốp pha dầm mép công-xôn','m2',[0,0,L*.8*K,0],'cp');add('Cốt thép dầm mép công-xôn','kg',[0,0,d*hl.dam,0],'th')}}
+ return rows}
+const hlCost=(KC,SH)=>hlRows(KC,SH).reduce((a,r)=>a+sum4(r.v)*pr[r.k],0);
 const sum4=a=>a.reduce((x,y)=>x+y,0);
 function calc(){
  const{D,SH,W,HF}=P,T=P.TT/1000,Dr=D-SH,L=P.N*W,r=rooms$(),NT=r.NT,NL=r.NL,R=r.R,Gg=P.G,nc=2*(P.N+1),lin=2*L+(P.N+1)*Dr,S=stairGeom();
@@ -327,6 +340,7 @@ function calc(){
  add('Cửa nhôm kính + cửa đi','m2',[0,NT*3.5,NL*3.5*K,0],'cua');
  const ga=P.gac?1.45*(Dr-T-.8):0;
  add('Gác lửng gỗ/sắt','m2',[0,NT*ga,NL*ga*K,0],'gac');add('Thang sắt gác','bộ',[0,P.gac?NT:0,P.gac?NL*K:0,0],'ts');add('Điện nước + thiết bị vệ sinh','phòng',[0,NT,NL*K,0],'dn');
+ hlRows(P.KC,P.SH).forEach(x=>rows.push(x));
  QROWS=rows;
  const agg=(k)=>sum4(rows.filter(x=>x.k===k).map(x=>sum4(x.v)));
  QAGG=[['Bê tông thương phẩm M250-300','m3','bt'],['Cốp pha (ván + nhân công)','m2','cp'],['Cốt thép (thép + gia công)','kg','th'],[`Xây tường ${P.TT} (gạch + vữa + công)`,'m2','x150'],['Trát tường (vữa + công)','m2','tr'],['Chống thấm (ước tính)','m2','ct'],['Sơn bả trọn gói (tường + trần)','m2','son'],['Cửa nhôm Xingfa kính cường lực + cửa đi','m2','cua'],['Gác lửng gỗ/sắt (ước tính)','m2','gac'],['Thang sắt gác (bộ/phòng)','bộ','ts'],['Điện nước + thiết bị vệ sinh / phòng (ước tính)','phòng','dn']].map(a=>({n:a[0],u:a[1],k:a[2],q:agg(a[2])}));
@@ -417,6 +431,15 @@ function refresh(){sum();month();renderQty();rmnote();if(typeof remind==='functi
 
 /* ================= GOOGLE, SAO LƯU, NHẮC VIỆC ================= */
 let G=Object.assign({nha:'NL',hd:30,bt:7,cv:7},st.get('nt3_g',{}));
+/* ===== nhiều nhà: mỗi nhà một bộ dữ liệu riêng; nhà đang dùng nằm ở các khóa thường, nhà khác cất trong nt4_h_<mã> ===== */
+const PK=['nt3_p','nt2_rooms','nt2_tc','nt2_bt','nt2_hl','nt2_pr','nt2_iv','nt2_td','nt2_cv','nt2_du','nt2_hd'];
+const HS=()=>{try{return JSON.parse(localStorage.getItem('nt4_houses'))||[]}catch(e){return[]}};
+(()=>{if(/^Nhà\s+[A-ZĐ]{2,}$/.test(G.nha)){G.nha=G.nha.replace(/^Nhà\s+/,'');try{localStorage.setItem('nt3_g',JSON.stringify(G))}catch(e){}}
+ try{if(!localStorage.getItem('nt4_home'))localStorage.setItem('nt4_home',G.nha);let hs=HS();if(!hs.length)hs=['NL','VTT','NTS'];if(hs.indexOf(G.nha)<0)hs.push(G.nha);localStorage.setItem('nt4_houses',JSON.stringify(hs))}catch(e){}})();
+const fbBase=h=>{h=h||G.nha;const home=localStorage.getItem('nt4_home')||'NL';return h===home?'nhatro':'nhatro_h/'+h.replace(/[.#$\[\]\/]/g,'_')};
+const fx=(k,v)=>k==='nt3_g'&&v?Object.assign({},v,{nha:G.nha}):v;
+function saveBlob(h){const b={};PK.forEach(k=>{const v=localStorage.getItem(k);if(v!==null)b[k]=v});try{localStorage.setItem('nt4_h_'+h,JSON.stringify(b))}catch(e){}}
+const othersObj=()=>{const o={};HS().forEach(h=>{if(h===G.nha)return;try{const b=JSON.parse(localStorage.getItem('nt4_h_'+h)||'null');if(b)o[h]=b}catch(e){}});return o};
 $('nha').value=G.nha;$('r-hd').value=G.hd;$('r-bt').value=G.bt;$('r-cv').value=G.cv;
 $('sg').addEventListener('change',e=>{if(e.target.id==='nha')G.nha=e.target.value;if(e.target.id==='r-hd')G.hd=+e.target.value||0;if(e.target.id==='r-bt')G.bt=+e.target.value||0;if(e.target.id==='r-cv')G.cv=+e.target.value||0;st.set('nt3_g',G);remind()});
 const fd=d=>{if(!d)return '';const[a,b,c]=d.split('-');return c+'/'+b+'/'+a};
@@ -427,7 +450,7 @@ const TB={
  bt:()=>tsv(btl.get().map(r=>[G.nha,r.hm,{'Tháng':30,'Quý':90,'6 tháng':180,'Năm':365}[r.ck]||'',fd(r.cuoi),'','','',r.cp||'',r.kv]))};
 function copyText(t){return(navigator.clipboard&&navigator.clipboard.writeText?navigator.clipboard.writeText(t):Promise.reject()).catch(()=>{const a=document.createElement('textarea');a.value=t;document.body.appendChild(a);a.select();let ok=false;try{ok=document.execCommand('copy')}catch(e){}a.remove();if(!ok)throw 0})}
 document.querySelectorAll('[data-cp]').forEach(b=>b.onclick=()=>{const t=TB[b.dataset.cp]();copyText(t).then(()=>{$('cpmsg').textContent='Đã sao chép '+(t?t.split('\n').length:0)+' dòng. Dán vào tab tương ứng trong Google Sheet.'},()=>{$('cpmsg').textContent='Trình duyệt chặn sao chép. Thử mở file bằng Chrome hoặc Edge.'})});
-$('bk').onclick=()=>{const o={ver:3,at:new Date().toISOString(),P,hl,pr,iv,G,rooms:rooms.get(),tc:tcl.get(),bt:btl.get(),td,cv:cvl.get(),du,hd:hdl.get()};dl('sao-luu-nha-tro-'+o.at.slice(0,10)+'.json',new Blob([JSON.stringify(o,null,1)],{type:'application/json'}))};
+$('bk').onclick=()=>{const o={ver:3,at:new Date().toISOString(),P,hl,pr,iv,G,rooms:rooms.get(),tc:tcl.get(),bt:btl.get(),td,cv:cvl.get(),du,hd:hdl.get(),houses:HS(),others:othersObj()};dl('sao-luu-nha-tro-'+o.at.slice(0,10)+'.json',new Blob([JSON.stringify(o,null,1)],{type:'application/json'}))};
 const addM=(d,m)=>{const x=new Date(d+'T00:00:00Z');x.setUTCMonth(x.getUTCMonth()+m);return x.toISOString().slice(0,10)};
 function reminders(){const out=[];rooms.get().forEach(r=>{if(r.tt==='Đã thuê'&&r.het)out.push({d:r.het,t:'Hết hạn hợp đồng '+r.ten+(r.khach?' – '+r.khach:''),lead:G.hd,k:'Hợp đồng'})});
  btl.get().forEach(r=>{const m={'Tháng':1,'Quý':3,'6 tháng':6,'Năm':12}[r.ck];if(r.cuoi&&m)out.push({d:addM(r.cuoi,m),t:'Bảo trì: '+r.hm,lead:G.bt,k:'Bảo trì'})});
@@ -455,7 +478,7 @@ const fbs=m=>$('fbs').textContent=m;
 function apply(k,v){
  if(window.LMS[k])return window.LMS[k].setData(v||[]);
  if(k=='nt3_p'){P=Object.assign({},P0,v);norm();FD.forEach(f=>$('f-'+f[0]).value=P[f[0]]);$('p-gac').checked=P.gac;$('p-bep').checked=P.bep;der();build();renderQty()}
- else if(k=='nt3_g'){G=Object.assign({nha:'NL',hd:30,bt:7,cv:7},v);$('nha').value=G.nha;$('r-hd').value=G.hd;$('r-bt').value=G.bt;$('r-cv').value=G.cv;remind()}
+ else if(k=='nt3_g'){G=Object.assign({nha:'NL',hd:30,bt:7,cv:7},v,{nha:G.nha});$('nha').value=G.nha;$('r-hd').value=G.hd;$('r-bt').value=G.bt;$('r-cv').value=G.cv;remind()}
  else if(k=='nt2_hl'){hl=Object.assign({},HL0,v);document.querySelectorAll('#steel input[data-k]').forEach(i=>i.value=hl[i.dataset.k]);renderQty()}
  else if(k=='nt2_pr'){pr=Object.assign({},PR0,v);renderQty();document.querySelectorAll('#qk input[data-k]').forEach(i=>i.value=pr[i.dataset.k])}
  else if(k=='nt2_iv'){iv=Object.assign(iv,v);document.querySelectorAll('#inv input[data-k]').forEach(i=>i.value=iv[i.dataset.k]);invest()}
@@ -465,9 +488,9 @@ function flush(){Object.keys(pend).forEach(k=>{const a=document.activeElement;if
 addEventListener('focusout',()=>setTimeout(flush,80));
 window.SYNC=(k,v)=>{if(!live||!dbr||KEYS.indexOf(k)<0)return;clearTimeout(tm[k]);tm[k]=setTimeout(()=>dbr.child(k).set(v).catch(e=>fbs('Lỗi ghi: '+e.message)),400)};
 async function lib(){if(window.firebase)return;for(const n of ['app','auth','database'])await new Promise((ok,er)=>{const s=document.createElement('script');s.src='https://www.gstatic.com/firebasejs/10.12.2/firebase-'+n+'-compat.js';s.onload=ok;s.onerror=()=>er(new Error('Không tải được thư viện Firebase, kiểm tra mạng'));document.head.appendChild(s)})}
-async function start(label){dbr=firebase.database().ref('nhatro');
- for(const k of KEYS){const snap=await dbr.child(k).get();if(snap.exists()){const v=snap.val();try{localStorage.setItem(k,JSON.stringify(v))}catch(x){}apply(k,v)}else{const l=localStorage.getItem(k);if(l)await dbr.child(k).set(JSON.parse(l))}}
- live=true;KEYS.forEach(k=>dbr.child(k).on('value',s=>{const v=s.val();if(v==null)return;if(JSON.stringify(v)==localStorage.getItem(k))return;try{localStorage.setItem(k,JSON.stringify(v))}catch(x){}pend[k]=v;flush()}));
+async function start(label){dbr=firebase.database().ref(fbBase());
+ for(const k of KEYS){const snap=await dbr.child(k).get();if(snap.exists()){const v=fx(k,snap.val());try{localStorage.setItem(k,JSON.stringify(v))}catch(x){}apply(k,v)}else{const l=localStorage.getItem(k);if(l)await dbr.child(k).set(JSON.parse(l))}}
+ live=true;KEYS.forEach(k=>dbr.child(k).on('value',s=>{const v=fx(k,s.val());if(v==null)return;if(JSON.stringify(v)==localStorage.getItem(k))return;try{localStorage.setItem(k,JSON.stringify(v))}catch(x){}pend[k]=v;flush()}));
  fbs('Đã kết nối'+(label?' ('+label+')':'')+'. Thay đổi trên máy này tự cập nhật sang các máy khác.')}
 function parseCfg(t){try{return JSON.parse(t)}catch(e){}const o={};String(t).replace(/([A-Za-z]+)\s*:\s*["']([^"']*)["']/g,(m,k,v)=>{o[k]=v});if(!o.apiKey||!o.databaseURL)throw new Error('Thiếu apiKey hoặc databaseURL trong firebaseConfig');return o}
 async function go(reg){try{const cfg=parseCfg($('fbc').value);st.set('nt3_fbc',cfg);await lib();if(!firebase.apps.length)firebase.initializeApp(cfg);const a=firebase.auth(),e=$('fbe').value,p=$('fbp').value;
@@ -497,7 +520,7 @@ $('gsb').textContent=(!gs.url||!gs.tok)?'Google Sheet: chưa kết nối (tab Go
 invest();
 </script><script>
 /* ===== sao lưu / khôi phục: có thông báo, chọn lại cùng file được, đẩy lên mạng và Sheet trước khi tải lại ===== */
-$('bk').onclick=()=>{const o={ver:3,at:new Date().toISOString(),P,hl,pr,iv,G,rooms:rooms.get(),tc:tcl.get(),bt:btl.get(),td,cv:cvl.get(),du,hd:hdl.get()};
+$('bk').onclick=()=>{const o={ver:3,at:new Date().toISOString(),P,hl,pr,iv,G,rooms:rooms.get(),tc:tcl.get(),bt:btl.get(),td,cv:cvl.get(),du,hd:hdl.get(),houses:HS(),others:othersObj()};
  dl('sao-luu-nha-tro-'+o.at.slice(0,16).replace(/[:T]/g,'-')+'.json',new Blob([JSON.stringify(o,null,1)],{type:'application/json'}));
  $('cpmsg').textContent='Đã tải bản sao lưu lúc '+new Date().toLocaleTimeString('vi-VN')+': '+o.rooms.length+' phòng, '+o.tc.length+' khoản thu chi, '+o.bt.length+' việc bảo trì. Kiểm tra thư mục Tải xuống.'};
 $('rsf').onchange=async e=>{const f=e.target.files[0];if(!f)return;
@@ -522,7 +545,7 @@ $('undo').onclick=async()=>{let u=null;try{u=JSON.parse(localStorage.getItem('nt
  if(gs.url&&gs.tok)await gsSend();location.reload()};
 </script><script>
 /* ===== số phiên bản + tự báo khi GitHub có bản mới hơn ===== */
-const APP_VER='2026-10-20-r17';
+const APP_VER='2026-10-21-r19';
 $('gsb').insertAdjacentHTML('afterend',' <span id="ver" style="color:var(--m);font-size:12px">· phiên bản '+APP_VER+'</span>');
 async function chkVer(){try{const r=await fetch(location.pathname+'?_='+Date.now(),{cache:'no-store'});if(!r.ok)return;const m=/APP_VER\s*=\s*'([^']+)'/.exec(await r.text());
  if(m&&m[1]!==APP_VER&&!$('newv')){const d=document.createElement('div');d.id='newv';d.style.cssText='position:fixed;left:0;right:0;top:0;z-index:99;background:#d4a24c;color:#0b1630;padding:10px;text-align:center';
@@ -574,9 +597,9 @@ $('bkr').onclick=()=>{const v=$('bkt').value.trim();if(!v){alert('Chưa có nộ
  const dt=new DataTransfer();dt.items.add(new File([v],'noi-dung-dan.json',{type:'application/json'}));$('rsf').files=dt.files;$('rsf').dispatchEvent(new Event('change'))};
 </script><script>
 /* ===== Công việc, dự toán đầu tư, chi đầu tư, gửi đủ dữ liệu sang Google Sheet ===== */
-const CV0=[["Nghiên cứu", "Khảo sát giá thuê và nhu cầu khu vực", "Cả 2 nhà"], ["Nghiên cứu", "Chọn đất và vị trí", "Cả 2 nhà"], ["Pháp lý và tài chính", "Kiểm tra giấy tờ đất, quy hoạch, lộ giới", "Cả 2 nhà"], ["Pháp lý và tài chính", "Xin giấy phép xây dựng nhà 1", "Nhà 1"], ["Pháp lý và tài chính", "Xin giấy phép xây dựng nhà 2", "Nhà 2"], ["Pháp lý và tài chính", "Chốt vốn và nguồn vốn", "Cả 2 nhà"], ["Thiết kế", "Thiết kế mặt bằng, kết cấu, điện nước, PCCC", "Cả 2 nhà"], ["Thiết kế", "Lập dự toán chi tiết", "Cả 2 nhà"], ["Xây nhà 1", "Chọn nhà thầu và ký hợp đồng", "Nhà 1"], ["Xây nhà 1", "Thi công và giám sát", "Nhà 1"], ["Xây nhà 1", "Nghiệm thu công trình", "Nhà 1"], ["Khai thác nhà 1", "Nghiệm thu PCCC", "Nhà 1"], ["Khai thác nhà 1", "Hoàn thiện nội thất và thiết bị", "Nhà 1"], ["Khai thác nhà 1", "Đăng ký kinh doanh và khai báo tạm trú", "Nhà 1"], ["Khai thác nhà 1", "Tìm khách và vận hành thử", "Nhà 1"], ["Xây nhà 2", "Chỉnh thiết kế theo kinh nghiệm nhà 1", "Nhà 2"], ["Xây nhà 2", "Thi công và nghiệm thu nhà 2", "Nhà 2"], ["Vận hành", "Hỏi chi cục thuế về thuế cho thuê nhà", "Cả 2 nhà"]].map(a=>({gd:a[0],ten:a[1],nha:a[2],ai:'',han:'',tt:'Chưa làm'}));
-const cvl=LM('cv','nt2_cv',[['gd','Giai đoạn','text'],['ten','Công việc','text'],['nha','Nhà','s',['Nhà 1','Nhà 2','Cả 2 nhà']],['ai','Người phụ trách','text'],['han','Hạn','date'],['tt','Trạng thái','s',['Chưa làm','Đang làm','Xong']]],CV0,()=>{remind()});
-$('addcv').onclick=()=>{cvl.add({gd:'',ten:'',nha:'Cả 2 nhà',ai:'',han:'',tt:'Chưa làm'})};
+const CV0=[["Nghiên cứu", "Khảo sát giá thuê và nhu cầu khu vực"], ["Nghiên cứu", "Chọn đất và vị trí"], ["Pháp lý và tài chính", "Kiểm tra giấy tờ đất, quy hoạch, lộ giới"], ["Pháp lý và tài chính", "Xin giấy phép xây dựng"], ["Pháp lý và tài chính", "Chốt vốn và nguồn vốn"], ["Thiết kế", "Thiết kế mặt bằng, kết cấu, điện nước, PCCC"], ["Thiết kế", "Lập dự toán chi tiết"], ["Xây dựng", "Chọn nhà thầu và ký hợp đồng"], ["Xây dựng", "Thi công và giám sát"], ["Xây dựng", "Nghiệm thu công trình"], ["Khai thác", "Nghiệm thu PCCC"], ["Khai thác", "Hoàn thiện nội thất và thiết bị"], ["Khai thác", "Đăng ký kinh doanh và khai báo tạm trú"], ["Khai thác", "Tìm khách và vận hành thử"], ["Vận hành", "Hỏi chi cục thuế về thuế cho thuê nhà"]].map(a=>({gd:a[0],ten:a[1],ai:'',han:'',tt:'Chưa làm'}));
+const cvl=LM('cv','nt2_cv',[['gd','Giai đoạn','text'],['ten','Công việc','text'],['ai','Người phụ trách','text'],['han','Hạn','date'],['tt','Trạng thái','s',['Chưa làm','Đang làm','Xong']]],CV0,()=>{remind()});
+$('addcv').onclick=()=>{cvl.add({gd:'',ten:'',ai:'',han:'',tt:'Chưa làm'})};
 const DU_HM=['Đất','Thiết kế và xin phép','Xây thô và hoàn thiện','Nội thất và thiết bị','PCCC và điện nước','Dự phòng','Vốn lưu động'];
 let du=st.get('nt2_du',{});
 function duReal(){const r={},o={k:0};DU_HM.forEach(h=>r[h]=0);tcl.get().forEach(x=>{if(x.loai!=='Chi đầu tư')return;if(r[x.hm]!==undefined)r[x.hm]+=x.tien;else o.k+=x.tien});r.__khac=o.k;return r}
@@ -591,12 +614,12 @@ $('cd-add').onclick=()=>{const t=+$('cd-tien').value;if(!(t>0)){alert('Nhập s�
 {const o=st.set;st.set=function(k,v){o.call(st,k,v);if(k==='nt2_tc')renderDu()}}
 {const r0=refresh;refresh=function(){r0();renderDu()}}
 function gsExtra(){const r=rooms.get(),n=r.length,gia=n?Math.round(r.reduce((a,x)=>a+x.gia,0)/n):0,cap=TOT+iv.oth*1e6,rm=n*iv.occ/100*gia,mt=rm>0?+((cap*iv.mt/100/12)/rm).toFixed(4):0,pm=[];
- FD.forEach(f=>pm.push(['Mô hình 3D',f[1],P[f[0]],'']));pm.push(['Mô hình 3D','Có gác lửng và thang sắt',P.gac?'Có':'Không',''],['Mô hình 3D','Bếp riêng trong từng phòng',P.bep?'Có':'Không','']);
+ FD.forEach(f=>pm.push(['Mô hình 3D',f[1],P[f[0]],'']));pm.push(['Mô hình 3D','Có gác lửng và thang sắt',P.gac?'Có':'Không',''],['Mô hình 3D','Bếp riêng trong từng phòng',P.bep?'Có':'Không',''],['Mô hình 3D','Kết cấu hành lang lầu',P.KC==='cot'?'Thêm cột mép hành lang':'Công-xôn',''],['Mô hình 3D','Đậu xe ở hành lang',P.PN?P.PN+' '+PTM[P.PT].n:'Không','']);
  IN.forEach(a=>pm.push(['Khai thác và thuế',a[1],iv[a[0]],'']));
  Object.keys(HLN).forEach(k=>pm.push(['Hàm lượng thép (kg/m3)',HLN[k],hl[k],'']));
  QAGG.forEach(a=>pm.push(['Đơn giá (đồng)',a.n+' / '+a.u,pr[a.k],'']));
  pm.push(['Nhắc việc','Nhắc hợp đồng hết hạn trước (ngày)',G.hd,''],['Nhắc việc','Nhắc bảo trì trước (ngày)',G.bt,''],['Nhắc việc','Nhắc công việc trước (ngày)',G.cv,'']);
- return{gd:{sp:n,gia,occ:iv.occ/100,von:Math.round(cap),mt,hd:G.hd,cv:G.cv,bt:G.bt},cv:cvl.get().map(r=>[r.gd,r.ten,r.nha,r.ai,fd(r.han),r.tt]),du:DU_HM.map(h=>[h,du[h]||0]),pm,th:TD.map((t,i)=>[t,td[i]?'Xong':'']),hd:hdl.get().map(r=>[G.nha,r.loai,r.soHD,fd(r.ngay),r.ky,r.cu||'',r.moi||'',r.sl||'',r.tien||'',fd(r.han),r.tt,r.nguon])}}
+ return{gd:{sp:n,gia,occ:iv.occ/100,von:Math.round(cap),mt,hd:G.hd,cv:G.cv,bt:G.bt},cv:cvl.get().map(r=>[r.gd,r.ten,G.nha,r.ai,fd(r.han),r.tt]),du:DU_HM.map(h=>[h,du[h]||0]),pm,th:TD.map((t,i)=>[t,td[i]?'Xong':'']),hd:hdl.get().map(r=>[G.nha,r.loai,r.soHD,fd(r.ngay),r.ky,r.cu||'',r.moi||'',r.sl||'',r.tien||'',fd(r.han),r.tt,r.nguon])}}
 renderDu();remind();
 </script><script>
 /* ===== Nhập hóa đơn điện nước (zip / xml / pdf / dán chữ) ===== */
@@ -671,4 +694,69 @@ $('hd-f').onchange=async e=>{const msgs=[],found=[];
  HDQ=hdMerge(found);if(!HDQ.length&&!msgs.length)msgs.push('Không tìm thấy hóa đơn nào trong file đã chọn.');hdShow(msgs);e.target.value=''};
 $('hd-doc').onclick=()=>{const r=parsePdfText($('hd-t').value);HDQ=r?hdMerge([Object.assign(r,{nguon:'dán chữ'})]):[];hdShow(r?[]:['Không nhận ra loại hóa đơn từ chữ đã dán.'])};
 syncHd();
+</script><script>
+/* ===== chọn nhà, khôi phục và hoàn tác theo nhà ===== */
+function renderHsel(){$('hsel').innerHTML=HS().map(h=>`<option${h===G.nha?' selected':''}>${h}</option>`).join('')}
+async function houseSwitch(to){if(!to||to===G.nha){renderHsel();return}
+ $('hsel').disabled=true;$('hadd').disabled=true;$('hmsg').textContent='Đang lưu rồi chuyển sang nhà '+to+'…';
+ try{if(gs.url&&gs.tok)await gsSend()}catch(x){}
+ await new Promise(r=>setTimeout(r,1000));
+ saveBlob(G.nha);PK.forEach(k=>localStorage.removeItem(k));
+ try{const nb=JSON.parse(localStorage.getItem('nt4_h_'+to)||'null');if(nb)Object.keys(nb).forEach(k=>localStorage.setItem(k,nb[k]))}catch(x){}
+ G.nha=to;localStorage.setItem('nt3_g',JSON.stringify(G));location.reload()}
+$('hsel').onchange=e=>houseSwitch(e.target.value);
+$('hadd').onclick=()=>{const n=(prompt('Mã nhà mới (ví dụ VTT, NTS). Không dùng các ký tự / . # $ [ ]')||'').trim();if(!n)return;
+ if(!/^[^\/.#$\[\]]{1,20}$/.test(n)){alert('Mã nhà không hợp lệ.');return}
+ const hs=HS();if(hs.indexOf(n)<0){hs.push(n);localStorage.setItem('nt4_houses',JSON.stringify(hs))}houseSwitch(n)};
+renderHsel();
+const BM={nt3_p:'P',nt2_hl:'hl',nt2_pr:'pr',nt2_iv:'iv',nt3_g:'G',nt2_rooms:'rooms',nt2_tc:'tc',nt2_bt:'bt',nt2_td:'td',nt2_cv:'cv',nt2_du:'du',nt2_hd:'hd'};
+const snapNow=()=>({at:new Date().toISOString(),P,hl,pr,iv,G,rooms:rooms.get(),tc:tcl.get(),bt:btl.get(),td,cv:cvl.get(),du,hd:hdl.get()});
+async function applyBackup(o){const prev=G.nha,newH=(o.G&&o.G.nha)||prev;
+ try{localStorage.setItem('nt3_undo',JSON.stringify(snapNow()))}catch(x){}
+ if(newH!==prev){saveBlob(prev);PK.forEach(k=>localStorage.removeItem(k))}
+ Object.keys(BM).forEach(k=>{if(o[BM[k]]!==undefined)try{localStorage.setItem(k,JSON.stringify(o[BM[k]]))}catch(x){}});
+ const hs=HS();(o.houses||[]).concat([newH]).forEach(h=>{if(hs.indexOf(h)<0)hs.push(h)});localStorage.setItem('nt4_houses',JSON.stringify(hs));
+ if(o.others)Object.keys(o.others).forEach(h=>{if(h!==newH)try{localStorage.setItem('nt4_h_'+h,JSON.stringify(o.others[h]))}catch(x){}});
+ if(live&&dbr){const r=firebase.database().ref(fbBase(newH));await Promise.all(Object.keys(BM).filter(k=>KEYS.indexOf(k)>=0&&o[BM[k]]!==undefined).map(k=>r.child(k).set(o[BM[k]])))}
+ localStorage.setItem('nt4_push','1')}
+$('rsf').onchange=async e=>{const f=e.target.files[0];if(!f)return;
+ try{const o=JSON.parse(await f.text());if(!o||!Array.isArray(o.rooms))throw 0;
+  const nh=(o.G&&o.G.nha)||G.nha;
+  if(!confirm('Khôi phục từ file '+f.name+(o.at?' (sao lưu lúc '+new Date(o.at).toLocaleString('vi-VN')+')':'')+'?\nSẽ thay dữ liệu của nhà '+nh+' bằng '+o.rooms.length+' phòng, '+(o.tc||[]).length+' khoản thu chi, '+(o.bt||[]).length+' việc bảo trì.'+(nh!==G.nha?'\nDữ liệu nhà '+G.nha+' đang xem được giữ lại, đổi nhà để xem.':''))){e.target.value='';return}
+  $('cpmsg').textContent='Đang khôi phục...';await applyBackup(o);
+  alert('Đã khôi phục nhà '+nh+'. Trang sẽ tải lại.');location.reload()
+ }catch(x){$('cpmsg').textContent='File sao lưu không đọc được hoặc không đúng định dạng.'}
+ e.target.value=''};
+$('undo').onclick=async()=>{let u=null;try{u=JSON.parse(localStorage.getItem('nt3_undo'))}catch(x){}
+ if(!u||!Array.isArray(u.rooms)){alert('Chưa có bản nào để hoàn tác. Bản này được lưu tự động ngay trước mỗi lần khôi phục từ file.');return}
+ if(!confirm('Quay lại dữ liệu nhà '+((u.G&&u.G.nha)||G.nha)+' lúc '+new Date(u.at).toLocaleString('vi-VN')+' (trước lần khôi phục gần nhất): '+u.rooms.length+' phòng, '+(u.tc||[]).length+' khoản thu chi?'))return;
+ await applyBackup(u);location.reload()};
+if(localStorage.getItem('nt4_push')){localStorage.removeItem('nt4_push');setTimeout(()=>{try{if(gs.url&&gs.tok)gsSend()}catch(x){}},2500)}
+</script><script>
+/* ===== hành lang: công-xôn hay thêm cột, và chỗ đậu xe trước cửa phòng ===== */
+const PTM={xd:{n:'xe máy đậu dọc',dep:.75,len:1.9},xv:{n:'xe máy đậu vuông góc',dep:1.9,len:.8},od:{n:'ô tô đậu dọc',dep:2,len:4.6}};
+let HLN2=0;
+function hlCalc(){const r=rooms$(),L=P.N*P.W,Dr=P.D-P.SH,T=P.TT/1000,M=PTM[P.PT],perCell=Math.floor(P.W*Math.max(Dr-T,0)/2.5),cap=P.G*perCell+P.XE,need=P.VM>0?P.VM:r.R,thieu=Math.max(0,need-cap),
+ needW=Math.ceil((M.dep+.9+.1)*10)/10,lenAv=P.PP*P.W,capC=Math.floor(lenAv/M.len);
+ return{r,L,Dr,M,perCell,cap,need,thieu,needW,lenAv,capC}}
+function renderHL(){const f=(id,v)=>{const e=$(id);if(e&&document.activeElement!==e)e.value=v};f('hl-kc',P.KC);f('hl-pt',P.PT);f('hl-pn',P.PN);f('hl-pp',P.PP);f('hl-vm',P.VM);
+ const c=hlCalc(),SH=P.SH,nw=c.needW,out=[];window.__needW=nw;
+ out.push(`<p><b>Chỗ để xe:</b> nhà xe trệt (${P.G} ô, mỗi ô khoảng ${c.perCell} xe máy) và dưới cầu thang (${P.XE} xe) chứa khoảng <b>${c.cap} xe máy</b>. Nhu cầu ${c.need} xe${P.VM>0?'':' (1 xe mỗi phòng)'}. ${c.thieu>0?'<b style="color:#ff8a80">Thiếu '+c.thieu+' xe.</b>':'<b style="color:#7bd88f">Đủ chỗ trong nhà xe.</b>'}</p>`);
+ if(P.PN>0){const fits=P.PN<=c.capC;
+  out.push(`<p><b>Đậu ${P.PN} xe trước cửa phòng 1${P.PP>1?' đến '+P.PP:''} (${c.M.n}):</b> cần hành lang rộng tối thiểu <b>${N(nw,1)} m</b> (chỗ đậu ${N(c.M.dep,2)} m + lối đi 0,9 m + dư 0,1 m). Đoạn trước ${P.PP} phòng dài ${N(c.lenAv,1)} m, đậu được ${c.capC} xe. ${fits?'<span style="color:#7bd88f">Đủ chỗ.</span>':'<span style="color:#ff8a80">Chưa đủ, tăng số phòng liền kề hoặc giảm số xe.</span>'}</p>`);
+  if(P.KC==='cot'&&P.PT==='od')out.push(`<p style="color:#ff8a80">Cột mép hành lang cách nhau ${N(P.W,1)} m (thông thủy khoảng ${N(P.W-.22,2)} m) nên ô tô dài ${N(c.M.len,1)} m không đậu dọc lọt giữa hai cột. Hãy chọn công-xôn hoặc cho ô tô vào sân trước.</p>`)}
+ const cur=SH>=nw?'Hành lang hiện tại '+N(SH,1)+' m đã đủ rộng.':'Hành lang hiện tại '+N(SH,1)+' m, còn thiếu '+N(nw-SH,1)+' m.';
+ out.push(`<p>${cur} Phòng sâu hiện ${N(c.Dr,1)} m (≈ ${N(P.W*c.Dr,1)} m² mỗi phòng).</p>`);
+ const row=(sh,t)=>`<tr><td>${t}</td><td class="r">${N(sh,1)} m</td><td class="r">${F(hlCost('cx',sh))} đ</td><td class="r">${F(hlCost('cot',sh))} đ</td><td>${sh<=1.5?'Công-xôn thoải mái':sh<=1.8?'Công-xôn cần dày sàn và dầm mép':'Công-xôn không nên, dùng cột'}</td></tr>`;
+ const sets=[[1.2,'Không đậu xe'],[1.5,'Giới hạn công-xôn gọn'],[1.8,'Xe máy đậu dọc'],[2.9,'Xe máy vuông góc / ô tô']];
+ out.push('<div class="w"><table><tr><th>Phương án</th><th class="r">Hành lang</th><th class="r">Thêm nếu công-xôn</th><th class="r">Thêm nếu thêm cột</th><th>Nhận xét</th></tr>'+sets.map(a=>row(a[0],a[1])).join('')+(sets.some(a=>Math.abs(a[0]-nw)<.05)||Math.abs(nw-SH)<.05?'':row(nw,'Theo lựa chọn đậu xe'))+'</table></div><p class="note">Chi phí thêm = so với sàn hành lang 1,2 m không gia cường. Công-xôn: sàn dày thêm, thép gia cường, dầm mép khi trên 1,5 m. Thêm cột: một hàng '+(P.N+1)+' cột 0,22 × 0,22 m, móng, giằng móng và dầm mép.</p>');
+ const ex=Math.max(0,nw-SH),landA=c.L*ex,drNew=P.D-nw;
+ if(P.PN>0&&ex>0)out.push(`<p>Nới hành lang từ ${N(SH,1)} lên ${N(nw,1)} m: nếu giữ đất, phòng chỉ còn sâu ${N(drNew,1)} m (≈ ${N(P.W*drNew,1)} m²). Nếu giữ phòng sâu như cũ cần thêm đất sâu ${N(ex,1)} m, tức ${N(landA,1)} m² (nhân với giá đất để ra tiền).</p><button class="b" id="hl-a1">Áp dụng: nới hành lang, thêm đất</button> <button class="b" id="hl-a2">Áp dụng: nới hành lang, giữ đất</button>`);
+ $('hlo').innerHTML=out.join('');
+ const a1=$('hl-a1'),a2=$('hl-a2');
+ const ap=keep=>{const o=P.SH;P.SH=Math.min(nw,3.2);if(keep)P.D=Math.min(P.D+(P.SH-o),10);if(P.SH>1.8)P.KC='cot';FD.forEach(f=>$('f-'+f[0]).value=P[f[0]]);sched()};
+ if(a1)a1.onclick=()=>ap(true);if(a2)a2.onclick=()=>ap(false)}
+['hl-kc','hl-pt','hl-pn','hl-pp','hl-vm'].forEach(id=>{$(id).onchange=e=>{const k={'hl-kc':'KC','hl-pt':'PT','hl-pn':'PN','hl-pp':'PP','hl-vm':'VM'}[id];P[k]=e.target.value;norm();sched()}});
+{const rq=renderQty;renderQty=function(){rq();renderHL()}}
+renderHL();
 </script></body></html>
