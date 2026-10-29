@@ -570,6 +570,7 @@ function othersPayload(){const out={},S=a=>a.map(r=>r.map(x=>String(x??'')));
   const P=(k,d)=>{try{const v=JSON.parse(b[k]);return v??d}catch(e){return d}};
   const rm=P('nt2_rooms',[]),tc=P('nt2_tc',[]),bt=P('nt2_bt',[]),hd=P('nt2_hd',[]),d2=P('nt2_du',{}),t2=P('nt2_td',{}),i2=P('nt2_iv',{});
   const n=rm.length,gia=n?Math.round(rm.reduce((a,r)=>a+toN(r.gia),0)/n):0;
+  const has=k=>b[k]!==undefined&&b[k]!==null;
   out[h]={
    rm:S(rm.map(r=>[h,String(r.ten||'').replace(/^Phòng\s*/,'').replace(/\s*\(.*\)$/,''),r.khach||'',r.sdt||'',toN(r.gia),toN(r.coc),fd(r.vao),fd(r.het)])),
    tc:S(tc.map(r=>{if(r.loai==='Chi đầu tư')return[fd(r.ngay),h,'Chi đầu tư',r.hm,toN(r.tien),r.gc];const isbt=(r.key||'').startsWith('bt|');const m=/^(Tiền phòng|Điện nước) – (.*)$/.exec(r.hm||'');
@@ -578,12 +579,19 @@ function othersPayload(){const out={},S=a=>a.map(r=>r.map(x=>String(x??'')));
    bt:S(bt.map(r=>[h,r.hm,{'Tháng':30,'Quý':90,'6 tháng':180,'Năm':365}[r.ck]||'',fd(r.cuoi),'','','',r.cp||'',r.kv])),
    hd:S(hd.map(r=>[h,r.loai,r.soHD,fd(r.ngay),r.ky,r.cu||'',r.moi||'',r.sl||'',r.tien||'',fd(r.han),r.tt,r.nguon])),
    du:DU_HM.map(k=>[k,d2[k]||0]),th:TD.map((t,i)=>[t,t2[i]?'Xong':'']),
-   gd:{sp:n,gia,occ:(i2.occ??90)/100}}});return out}
+   gd:{sp:n,gia,occ:(i2.occ??90)/100}};
+  if(!has('nt2_rooms')){delete out[h].rm;delete out[h].gd}
+  if(!has('nt2_tc'))delete out[h].tc;if(!has('nt2_bt'))delete out[h].bt;if(!has('nt2_hd'))delete out[h].hd;
+  if(!has('nt2_du'))delete out[h].du;if(!has('nt2_td'))delete out[h].th;
+  if(!Object.keys(out[h]).length)delete out[h]});return out}
 const gsBadUrl=u=>!/^https:\/\/script\.google\.com\/(a\/[^/]+\/)?macros\/s\/[^/]+\/exec(\?.*)?$/.test(u);
+let gsBusy=false,gsAgain=false;
 async function gsSend(){gsSave();if(!gs.url||!gs.tok){gsm('Cần nhập đường dẫn và mật khẩu.');return}
+ if(gsBusy){gsAgain=true;return}gsBusy=true;try{await gsSend1()}finally{gsBusy=false;if(gsAgain){gsAgain=false;setTimeout(gsSend,1500)}}}
+async function gsSend1(){
  if(gsBadUrl(gs.url)){gsm('Đường dẫn chưa đúng: phải dạng https://script.google.com/macros/s/.../exec (lấy ở Triển khai, Ứng dụng web). Link /dev hoặc link trình soạn thảo sẽ không nhận dữ liệu.');return}
  const body=JSON.stringify(Object.assign({token:gs.tok,nha:G.nha,rm:rowsOf('rm'),tc:rowsOf('tc'),bt:rowsOf('bt')},gsExtra(),{others:othersPayload()}));gsm('Đang gửi...');
- try{const r=await fetch(gs.url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body});const tx=(await r.text()).trim();gsm((r.ok?'':'HTTP '+r.status+': ')+tx.slice(0,600)+' · '+new Date().toLocaleTimeString('vi-VN'))}
+ try{const r=await fetch(gs.url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body});const tx=(await r.text()).trim();gsm((r.ok?'':'HTTP '+r.status+': ')+tx.slice(0,600)+' · '+new Date().toLocaleTimeString('vi-VN'));if(/^BAN/.test(tx)){gsAgain=false;setTimeout(gsSend,9000)}}
  catch(x){try{await fetch(gs.url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body});gsm('Đã gửi lúc '+new Date().toLocaleTimeString('vi-VN')+' nhưng trình duyệt không đọc được phản hồi nên chưa biết Google có nhận không. Mở Google Sheet, tab “Nhật ký đồng bộ” để xem kết quả; nếu không thấy dòng mới thì kiểm tra triển khai: Thực thi bằng Tôi, Quyền truy cập Bất kỳ ai.')}catch(y){gsm('Lỗi gửi: '+y.message)}}}
 $('gsgo').onclick=gsSend;
 $('gsping').onclick=async()=>{gsSave();if(!gs.url){gsm('Cần nhập đường dẫn /exec trước.');return}
@@ -958,7 +966,7 @@ function authorize() {
   DriveApp.getRootFolder().getName();
 }
 
-const VERSION = 5;
+const VERSION = 6;
 function doGet() {
   const ss = SpreadsheetApp.openById(SHEET_ID);
   const msg = 'Apps Script nhà trọ đang chạy (phiên bản ' + VERSION + '). Sheet: ' + ss.getName() + '. Doc: ' + DocumentApp.openById(DOC_ID).getName() + '.';
@@ -976,7 +984,7 @@ function doPost(e) {
       return out(m0);
     }
     const lock = LockService.getScriptLock();
-    lock.waitLock(30000);
+    if (!lock.tryLock(25000)) return out('BAN: script đang xử lý yêu cầu trước, app sẽ tự gửi lại.');
     try {
       if (d.action === 'file') return out(saveFile_(d));
       ss = SpreadsheetApp.openById(SHEET_ID);
@@ -984,7 +992,13 @@ function doPost(e) {
       let errs = syncSheet_(ss, d);
       Object.keys(d.others || {}).forEach(function (h) { errs = errs.concat(syncSheet_(ss, Object.assign({ nha: h }, d.others[h]))); });
       let docMsg = 'Doc OK';
-      try { syncDoc_(d); } catch (x) { docMsg = 'Doc lỗi: ' + x.message; errs.push(docMsg); }
+      try {
+        const props = PropertiesService.getScriptProperties();
+        const sig = Utilities.base64Encode(Utilities.computeDigest(Utilities.DigestAlgorithm.MD5,
+          JSON.stringify([d.nha, d.rm, d.tc, d.bt, d.cv, d.du, d.th, d.hd, d.gd, d.others]), Utilities.Charset.UTF_8));
+        if (props.getProperty('docSig') === sig) docMsg = 'Doc không đổi';
+        else { syncDoc_(d); props.setProperty('docSig', sig); }
+      } catch (x) { docMsg = 'Doc lỗi: ' + x.message; errs.push(docMsg); }
       const msg = (errs.length ? 'Đã ghi, nhưng có lỗi: ' + errs.join(' | ') : 'Đã cập nhật Sheet, ' + docMsg) + ' (' + houses.join(', ') + ').';
       log_(ss, msg);
       return out(msg);
@@ -1056,8 +1070,26 @@ function ensureRows_(sh, lastRow) {
 function writeBlock_(sh, startRow, firstCol, ncols, rows, oldCount) {
   const clearN = Math.max(oldCount, rows.length, 1);
   ensureRows_(sh, startRow + clearN - 1);
-  sh.getRange(startRow, firstCol, clearN, ncols).clearContent();
-  if (rows.length) sh.getRange(startRow, firstCol, rows.length, ncols).setValues(rows);
+  const rng = sh.getRange(startRow, firstCol, clearN, ncols);
+  // Tạm gỡ quy tắc xác thực (dropdown) để không bị chặn, ghi xong gắn lại nguyên vẹn.
+  let dv = null;
+  try { dv = rng.getDataValidations(); rng.clearDataValidations(); } catch (x) { dv = null; }
+  try {
+    rng.clearContent();
+    if (rows.length) sh.getRange(startRow, firstCol, rows.length, ncols).setValues(rows);
+  } catch (x) {
+    throw new Error(x.message + ' [ghi ' + sh.getName() + '!' + rng.getA1Notation() + ']');
+  } finally {
+    if (dv) { try { rng.setDataValidations(dv); } catch (y) {} }
+  }
+}
+
+/* Ghi một ô, tạm gỡ quy tắc xác thực nếu có. */
+function setV_(rng, v) {
+  let dv = null;
+  try { dv = rng.getDataValidation(); if (dv) rng.clearDataValidations(); } catch (x) { dv = null; }
+  rng.setValue(v);
+  if (dv) { try { rng.setDataValidation(dv); } catch (y) {} }
 }
 
 /* Đọc tối đa n ô ở cột A (không vượt số dòng thực của tab, tránh lỗi "range invalid"). */
@@ -1208,7 +1240,7 @@ function syncSheet_(ss, d) {
     const sh = sheet_(ss, 'Giả định');
     gdColNum = gdCol_(sh, nha);
     const a = colA_(sh, 30);
-    const set = function (label, c, v) { const i = a.indexOf(label); if (i >= 0 && c && v !== undefined) sh.getRange(i + 1, c).setValue(v); };
+    const set = function (label, c, v) { const i = a.indexOf(label); if (i >= 0 && c && v !== undefined) setV_(sh.getRange(i + 1, c), v); };
     set('Số phòng', gdColNum, d.gd.sp);
     set('Giá thuê trung bình mỗi phòng', gdColNum, d.gd.gia);
     set('Tỷ lệ lấp đầy mục tiêu', gdColNum, d.gd.occ);
@@ -1228,7 +1260,7 @@ function syncSheet_(ss, d) {
     const sh = sheet_(ss, 'Dự toán');
     const a = colA_(sh, 30);
     const col = duCol_(sh, nha, gdColNum || gdCol_(sheet_(ss, 'Giả định'), nha));
-    if (col) d.du.forEach(function (r) { const i = a.indexOf(r[0]); if (i >= 0) sh.getRange(i + 1, col).setValue(Number(r[1]) ? Number(r[1]) : ''); });
+    if (col) d.du.forEach(function (r) { const i = a.indexOf(r[0]); if (i >= 0) setV_(sh.getRange(i + 1, col), Number(r[1]) ? Number(r[1]) : ''); });
   }
   });
 
@@ -1238,7 +1270,7 @@ function syncSheet_(ss, d) {
     const sh = sheet_(ss, 'Thủ tục');
     const a = colA_(sh, 40);
     const col = nameCol_(sh, nha, 2);
-    d.th.forEach(function (r) { const i = a.indexOf(r[0]); if (i >= 0) sh.getRange(i + 1, col).setValue(r[1]); });
+    d.th.forEach(function (r) { const i = a.indexOf(r[0]); if (i >= 0) setV_(sh.getRange(i + 1, col), r[1]); });
   }
   });
 
