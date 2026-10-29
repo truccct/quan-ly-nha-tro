@@ -131,7 +131,7 @@ tr.s td{color:var(--g);font-size:14px}
 <h3>Đồng bộ tự động vào Google Sheet</h3>
 <p class="note">Cần làm một lần: bấm “Tải file google-apps-script.gs”, mở Google Sheet, Tiện ích mở rộng, Apps Script, dán nội dung file, đổi TOKEN, chạy hàm authorize để cấp quyền, rồi Triển khai, Ứng dụng web, chạy với quyền của bạn, ai có đường dẫn đều truy cập được. Dán đường dẫn /exec và mật khẩu vào đây. Sau đó mọi dữ liệu nhập tay hoặc tải từ app tự lưu vào: các tab của Google Sheet (Phòng, Thu chi, Bảo trì, Công việc, Hóa đơn, Giả định, Dự toán, Thủ tục, Thông số app), phần Phụ lục cuối Google Doc, và file hóa đơn gốc trong thư mục Drive “Nhà trọ - hóa đơn và tài liệu”. Công thức trong Sheet giữ nguyên.<br><button class="b" id="gasdl" type="button" style="margin-top:6px">Tải file google-apps-script.gs</button></p>
 <div class="g"><label>Đường dẫn ứng dụng web (/exec)<input id="gsu" type="text"></label><label>Mật khẩu (TOKEN)<input id="gst" type="password"></label><label><input id="gsa" type="checkbox" style="width:auto"> Tự động đẩy lên Sheet khi có thay đổi</label></div>
-<button class="b" id="gsgo">Đồng bộ lên Sheet ngay</button><p class="info" id="gsm">Chưa cấu hình.</p>
+<button class="b" id="gsgo">Đồng bộ lên Sheet ngay</button><button class="b" id="gsping" type="button">Kiểm tra kết nối</button><p class="info" id="gsm">Chưa cấu hình.</p>
 <h3>Sao lưu vào Sheet</h3>
 <button class="b" data-cp="rm">Sao chép bảng Phòng</button><button class="b" data-cp="tc">Sao chép bảng Thu chi</button><button class="b" data-cp="bt">Sao chép bảng Bảo trì</button>
 <p class="info" id="cpmsg">Bấm một nút, mở tab tương ứng trong Sheet, chọn ô A5 (Phòng), A3 (Thu chi) hoặc A5 (Bảo trì) rồi dán. Bỏ dòng mẫu cũ trước khi dán.</p>
@@ -564,11 +564,33 @@ let gs=Object.assign({url:'',tok:'',auto:true},st.get('nt3_gs',{}));if(!gs.v){gs
 const gsm=m=>{$('gsm').textContent=m;$('gsb').textContent='Google Sheet: '+m.slice(0,70)},rowsOf=k=>TB[k]().split('\n').filter(Boolean).map(l=>l.split('\t'));
 function gsSave(){gs={url:$('gsu').value.trim(),tok:$('gst').value,auto:$('gsa').checked,v:2};st.set('nt3_gs',gs)}
 ['gsu','gst'].forEach(i=>$(i).oninput=gsSave);$('gsa').onchange=()=>{gsSave();if(gs.auto)gsSend()};
+/* Dữ liệu của các nhà khác (đang cất trong nt4_h_<mã>) để Sheet và Doc luôn có đủ mọi nhà, không phụ thuộc nhà đang xem */
+function othersPayload(){const out={},S=a=>a.map(r=>r.map(x=>String(x??'')));
+ HS().forEach(h=>{if(h===G.nha)return;let b=null;try{b=JSON.parse(localStorage.getItem('nt4_h_'+h)||'null')}catch(e){}if(!b)return;
+  const P=(k,d)=>{try{const v=JSON.parse(b[k]);return v??d}catch(e){return d}};
+  const rm=P('nt2_rooms',[]),tc=P('nt2_tc',[]),bt=P('nt2_bt',[]),hd=P('nt2_hd',[]),d2=P('nt2_du',{}),t2=P('nt2_td',{}),i2=P('nt2_iv',{});
+  const n=rm.length,gia=n?Math.round(rm.reduce((a,r)=>a+toN(r.gia),0)/n):0;
+  out[h]={
+   rm:S(rm.map(r=>[h,String(r.ten||'').replace(/^Phòng\s*/,'').replace(/\s*\(.*\)$/,''),r.khach||'',r.sdt||'',toN(r.gia),toN(r.coc),fd(r.vao),fd(r.het)])),
+   tc:S(tc.map(r=>{if(r.loai==='Chi đầu tư')return[fd(r.ngay),h,'Chi đầu tư',r.hm,toN(r.tien),r.gc];const isbt=(r.key||'').startsWith('bt|');const m=/^(Tiền phòng|Điện nước) – (.*)$/.exec(r.hm||'');
+    if(isbt)return[fd(r.ngay),h,'Chi vận hành','Bảo trì',toN(r.tien),(r.hm||'').replace(/^Bảo trì – /,'')+(r.gc?' · '+r.gc:'')];
+    return[fd(r.ngay),h,r.loai==='Thu'?'Thu':'Chi vận hành',m?(m[1]==='Tiền phòng'?'Tiền thuê phòng':'Điện nước thu'):r.hm,toN(r.tien),m?(m[2]+(r.gc?' · '+r.gc:'')):r.gc]})),
+   bt:S(bt.map(r=>[h,r.hm,{'Tháng':30,'Quý':90,'6 tháng':180,'Năm':365}[r.ck]||'',fd(r.cuoi),'','','',r.cp||'',r.kv])),
+   hd:S(hd.map(r=>[h,r.loai,r.soHD,fd(r.ngay),r.ky,r.cu||'',r.moi||'',r.sl||'',r.tien||'',fd(r.han),r.tt,r.nguon])),
+   du:DU_HM.map(k=>[k,d2[k]||0]),th:TD.map((t,i)=>[t,t2[i]?'Xong':'']),
+   gd:{sp:n,gia,occ:(i2.occ??90)/100}}});return out}
+const gsBadUrl=u=>!/^https:\/\/script\.google\.com\/(a\/[^/]+\/)?macros\/s\/[^/]+\/exec(\?.*)?$/.test(u);
 async function gsSend(){gsSave();if(!gs.url||!gs.tok){gsm('Cần nhập đường dẫn và mật khẩu.');return}
- const body=JSON.stringify(Object.assign({token:gs.tok,nha:G.nha,rm:rowsOf('rm'),tc:rowsOf('tc'),bt:rowsOf('bt')},gsExtra()));gsm('Đang gửi...');
- try{const r=await fetch(gs.url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body});gsm((await r.text()).slice(0,200)+' · '+new Date().toLocaleTimeString('vi-VN'))}
- catch(x){try{await fetch(gs.url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body});gsm('Đã gửi lúc '+new Date().toLocaleTimeString('vi-VN')+' (trình duyệt không đọc được phản hồi, hãy mở Sheet kiểm tra lần đầu).')}catch(y){gsm('Lỗi gửi: '+y.message)}}}
+ if(gsBadUrl(gs.url)){gsm('Đường dẫn chưa đúng: phải dạng https://script.google.com/macros/s/.../exec (lấy ở Triển khai, Ứng dụng web). Link /dev hoặc link trình soạn thảo sẽ không nhận dữ liệu.');return}
+ const body=JSON.stringify(Object.assign({token:gs.tok,nha:G.nha,rm:rowsOf('rm'),tc:rowsOf('tc'),bt:rowsOf('bt')},gsExtra(),{others:othersPayload()}));gsm('Đang gửi...');
+ try{const r=await fetch(gs.url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body});const tx=(await r.text()).trim();gsm((r.ok?'':'HTTP '+r.status+': ')+tx.slice(0,600)+' · '+new Date().toLocaleTimeString('vi-VN'))}
+ catch(x){try{await fetch(gs.url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body});gsm('Đã gửi lúc '+new Date().toLocaleTimeString('vi-VN')+' nhưng trình duyệt không đọc được phản hồi nên chưa biết Google có nhận không. Mở Google Sheet, tab “Nhật ký đồng bộ” để xem kết quả; nếu không thấy dòng mới thì kiểm tra triển khai: Thực thi bằng Tôi, Quyền truy cập Bất kỳ ai.')}catch(y){gsm('Lỗi gửi: '+y.message)}}}
 $('gsgo').onclick=gsSend;
+$('gsping').onclick=async()=>{gsSave();if(!gs.url){gsm('Cần nhập đường dẫn /exec trước.');return}
+ if(gsBadUrl(gs.url)){gsm('Đường dẫn chưa đúng: phải dạng https://script.google.com/macros/s/.../exec');return}
+ gsm('Đang kiểm tra...');try{const r=await fetch(gs.url);const t=(await r.text()).trim();gsm((/^Apps Script nhà trọ/.test(t)?'Kết nối được. ':'Có phản hồi nhưng không phải script nhà trọ (có thể sai triển khai hoặc yêu cầu đăng nhập Google): ')+t.slice(0,300))}
+ catch(x){gsm('Không kết nối được ('+x.message+'). Kiểm tra: đường dẫn /exec, triển khai Quyền truy cập “Bất kỳ ai”, và bản triển khai đã là phiên bản mới nhất.')}};
+setTimeout(()=>{if(gs.auto&&gs.url&&gs.tok&&!gsBadUrl(gs.url))gsSend()},4000);
 async function gsUpload(files){if(!gs.url||!gs.tok||!files.length)return;let ok=0,bad=[];
  for(const f of files){if(f.size>12e6){bad.push(f.name+' (quá 12 MB)');continue}
   try{const b64=await new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(String(r.result).split(',')[1]||'');r.onerror=()=>rej(r.error);r.readAsDataURL(f)});
@@ -936,22 +958,61 @@ function authorize() {
   DriveApp.getRootFolder().getName();
 }
 
-function doGet() { return out('Apps Script nhà trọ đang chạy.'); }
+const VERSION = 5;
+function doGet() {
+  const ss = SpreadsheetApp.openById(SHEET_ID);
+  const msg = 'Apps Script nhà trọ đang chạy (phiên bản ' + VERSION + '). Sheet: ' + ss.getName() + '. Doc: ' + DocumentApp.openById(DOC_ID).getName() + '.';
+  log_(ss, 'Kiểm tra kết nối: script phiên bản ' + VERSION + ' đang chạy.');
+  return out(msg);
+}
 
 function doPost(e) {
+  let ss = null;
   try {
     const d = JSON.parse(e.postData.contents);
-    if (d.token !== TOKEN) return out('Sai mật khẩu.');
+    if (d.token !== TOKEN) {
+      const m0 = 'Sai mật khẩu (TOKEN trong script khác mật khẩu nhập ở app).';
+      log_(SpreadsheetApp.openById(SHEET_ID), m0);
+      return out(m0);
+    }
     const lock = LockService.getScriptLock();
     lock.waitLock(30000);
     try {
       if (d.action === 'file') return out(saveFile_(d));
-      syncSheet_(SpreadsheetApp.openById(SHEET_ID), d);
-      let docMsg = ' và Doc';
-      try { syncDoc_(d); } catch (x) { docMsg = ' (Doc lỗi: ' + x.message + ')'; }
-      return out('Đã cập nhật Sheet' + docMsg + ' (' + d.nha + ').');
+      ss = SpreadsheetApp.openById(SHEET_ID);
+      const houses = [d.nha].concat(Object.keys(d.others || {}));
+      let errs = syncSheet_(ss, d);
+      Object.keys(d.others || {}).forEach(function (h) { errs = errs.concat(syncSheet_(ss, Object.assign({ nha: h }, d.others[h]))); });
+      let docMsg = 'Doc OK';
+      try { syncDoc_(d); } catch (x) { docMsg = 'Doc lỗi: ' + x.message; errs.push(docMsg); }
+      const msg = (errs.length ? 'Đã ghi, nhưng có lỗi: ' + errs.join(' | ') : 'Đã cập nhật Sheet, ' + docMsg) + ' (' + houses.join(', ') + ').';
+      log_(ss, msg);
+      return out(msg);
     } finally { lock.releaseLock(); }
-  } catch (x) { return out('Lỗi: ' + x.message); }
+  } catch (x) {
+    const m = 'Lỗi: ' + x.message;
+    try { log_(ss || SpreadsheetApp.openById(SHEET_ID), m); } catch (y) {}
+    return out(m);
+  }
+}
+
+/* Nhật ký mỗi lần app gửi dữ liệu, để biết yêu cầu có tới nơi và lỗi ở đâu. Tab "Nhật ký đồng bộ" tự tạo. */
+function log_(ss, text) {
+  try {
+    let sh = ss.getSheetByName('Nhật ký đồng bộ');
+    if (!sh) { sh = ss.insertSheet('Nhật ký đồng bộ'); sh.appendRow(['Thời gian', 'Kết quả']); }
+    sh.appendRow([new Date(), text]);
+    if (sh.getLastRow() > 400) sh.deleteRows(2, 100);
+  } catch (x) {}
+}
+
+/* Chạy thủ công trong trình soạn thảo (chọn hàm kiemTra, bấm Chạy) để cấp quyền và tạo tab "Nhật ký đồng bộ". */
+function kiemTra() {
+  const ss = SpreadsheetApp.openById(SHEET_ID);
+  log_(ss, 'Kiểm tra thủ công: script phiên bản ' + VERSION + ' hoạt động, đã có quyền ghi Sheet. TOKEN ' + (TOKEN === 'DOI_MAT_KHAU_NAY' ? 'CHƯA ĐỔI (vẫn là DOI_MAT_KHAU_NAY)' : 'đã đổi') + '.');
+  DocumentApp.openById(DOC_ID).getName();
+  DriveApp.getRootFolder().getName();
+  Logger.log('OK: xem tab Nhật ký đồng bộ trong Sheet.');
 }
 
 function out(t) { return ContentService.createTextOutput(t); }
@@ -999,34 +1060,116 @@ function writeBlock_(sh, startRow, firstCol, ncols, rows, oldCount) {
   if (rows.length) sh.getRange(startRow, firstCol, rows.length, ncols).setValues(rows);
 }
 
+/* Đọc tối đa n ô ở cột A (không vượt số dòng thực của tab, tránh lỗi "range invalid"). */
+function colA_(sh, n) {
+  const k = Math.min(n, sh.getMaxRows());
+  return sh.getRange(1, 1, k, 1).getValues().map(function (r) { return String(r[0]); });
+}
+
 function sheet_(ss, name) {
   const sh = ss.getSheetByName(name);
   if (!sh) throw new Error('Không thấy tab ' + name);
   return sh;
 }
 
+function colLetter_(n) { let s = ''; while (n > 0) { const m = (n - 1) % 26; s = String.fromCharCode(65 + m) + s; n = Math.floor((n - 1) / 26); } return s; }
+
+/* Thêm nhà vào danh sách Nhà (cột "Nhà" ở Giả định) để menu chọn và tab Thống kê nhà thấy nhà mới. */
+function ensureHouseInList_(sh, nha) {
+  const hdr = sh.getRange(4, 1, 1, sh.getMaxColumns()).getValues()[0].map(String);
+  let col = 0;
+  for (let i = hdr.length - 1; i >= 1; i--) { if (hdr[i] === 'Nhà') { col = i + 1; break; } }
+  if (!col) return;
+  const vals = sh.getRange(5, col, Math.max(1, sh.getMaxRows() - 4), 1).getValues().map(function (r) { return String(r[0]); });
+  if (vals.indexOf(nha) >= 0) return;
+  const empty = vals.indexOf('');
+  if (empty >= 0) sh.getRange(5 + empty, col).setValue(nha);
+}
+
+/* Giả định: mỗi nhà một cột (hàng 4). Nhà mới: chèn thêm cột, chép công thức kết quả từ cột liền trước. */
+function gdCol_(sh, nha) {
+  const a = colA_(sh, 30);
+  const hdr = sh.getRange(4, 1, 1, sh.getMaxColumns()).getValues()[0].map(String);
+  let last = 1, found = 0;
+  for (let i = 1; i < hdr.length; i++) {
+    if (hdr[i] === 'Ghi chú') break;
+    if (hdr[i] !== '') { last = i + 1; if (hdr[i] === nha) found = i + 1; }
+  }
+  if (!found) {
+    sh.insertColumnAfter(last);
+    const nc = last + 1;
+    const kq = a.indexOf('Kết quả tính từ giả định') + 1;
+    const rows = [4, 5, 6, 7, 8, 9].concat(kq ? [kq, kq + 1, kq + 2] : []);
+    rows.forEach(function (r) { sh.getRange(r, last).copyTo(sh.getRange(r, nc)); });
+    sh.getRange(4, nc).setValue(nha);
+    if (kq) sh.getRange(kq, nc).setValue(nha);
+    found = nc;
+  }
+  ensureHouseInList_(sh, nha);
+  return found;
+}
+
+/* Dự toán: mỗi nhà một khối 3 cột (Dự toán, Thực chi, Chênh lệch), tiêu đề nhà ở hàng 3. */
+function duCol_(sh, nha, gdCol) {
+  const a = colA_(sh, 30);
+  const hdr = sh.getRange(3, 1, 1, sh.getMaxColumns()).getValues()[0].map(String);
+  let last = 0, found = 0;
+  for (let i = 1; i < hdr.length; i++) { if (hdr[i] !== '') { last = i + 1; if (hdr[i] === nha) found = i + 1; } }
+  if (found || !last) return found;
+  const start = last + 3, rowsN = Math.max(sh.getLastRow(), 16) - 2;
+  const need = start + 2 - sh.getMaxColumns();
+  if (need > 0) sh.insertColumnsAfter(sh.getMaxColumns(), need);
+  sh.getRange(3, last, rowsN, 3).copyTo(sh.getRange(3, start, rowsN, 3));
+  sh.getRange(3, start).setValue(nha);
+  const r0 = a.indexOf('Đất') + 1, rN = a.indexOf('Vốn lưu động') + 1, tot = a.indexOf('Tổng') + 1;
+  if (r0 && rN) sh.getRange(r0, start, rN - r0 + 1, 1).clearContent();
+  const r1 = a.indexOf('Dự toán so với tổng vốn dự kiến') + 1;
+  if (r1 && tot && gdCol) sh.getRange(r1, start).setFormula("=IF('Giả định'!" + colLetter_(gdCol) + "8=0,0," + colLetter_(start) + tot + "/'Giả định'!" + colLetter_(gdCol) + "8)");
+  return start;
+}
+
+/* Thủ tục và Thông số app: cột theo tên nhà ở hàng 1. NL dùng cột "Nhà 1". Nhà mới thêm cột mới ở cuối. */
+function nameCol_(sh, nha, startCol) {
+  const hdr = sh.getRange(1, 1, 1, sh.getMaxColumns()).getValues()[0].map(String);
+  const alias = nha === 'NL' ? 'Nhà 1' : nha;
+  let last = startCol - 1, found = 0;
+  for (let i = startCol - 1; i < hdr.length; i++) { if (hdr[i] !== '') { last = i + 1; if (hdr[i] === nha || hdr[i] === alias) found = i + 1; } }
+  if (found) return found;
+  const nc = last + 1;
+  if (nc > sh.getMaxColumns()) sh.insertColumnAfter(sh.getMaxColumns());
+  sh.getRange(1, nc).setValue(nha);
+  return nc;
+}
+
 /* ---------- ghi vào Google Sheet ---------- */
 function syncSheet_(ss, d) {
-  const nha = d.nha;
+  const nha = d.nha, errs = [];
   TZ = ss.getSpreadsheetTimeZone() || TZ;
+  let gdColNum = 0;
+  const step = function (name, fn) { try { fn(); } catch (x) { errs.push(nha + '/' + name + ': ' + x.message); } };
 
   // Phòng: Nhà, Phòng, Khách, ĐT, Giá, Cọc, Ngày bắt đầu, Ngày hết hạn (A:H, dòng 5)
+  step('Phòng', function () {
   if (d.rm) {
     const sh = sheet_(ss, 'Phòng');
     const rows = d.rm.map(function (r) { return [r[0], num_(r[1]), r[2], r[3], num_(r[4]), num_(r[5]), toDate_(r[6]), toDate_(r[7])]; });
     const old = readBlock_(sh, 5, 8);
     writeBlock_(sh, 5, 1, 8, mergeByKey_(old, 0, nha, rows), old.length);
   }
+  });
 
   // Thu chi: Ngày, Nhà, Loại, Hạng mục, Số tiền, Ghi chú (A:F, dòng 2)
+  step('Thu chi', function () {
   if (d.tc) {
     const sh = sheet_(ss, 'Thu chi');
     const rows = d.tc.map(function (r) { return [toDate_(r[0]), r[1], r[2], r[3], num_(r[4]), r[5]]; });
     const old = readBlock_(sh, 2, 6);
     writeBlock_(sh, 2, 1, 6, mergeByKey_(old, 1, nha, rows), old.length);
   }
+  });
 
   // Bảo trì: A:D nhập liệu, E:G công thức (giữ nguyên), H:I nhập liệu (dòng 5)
+  step('Bảo trì', function () {
   if (d.bt) {
     const sh = sheet_(ss, 'Bảo trì');
     const rows = d.bt.map(function (r) { return [r[0], r[1], num_(r[2]), toDate_(r[3]), '', '', '', num_(r[7]), r[8]]; });
@@ -1035,73 +1178,88 @@ function syncSheet_(ss, d) {
     writeBlock_(sh, 5, 1, 4, all.map(function (r) { return r.slice(0, 4); }), old.length);
     writeBlock_(sh, 5, 8, 2, all.map(function (r) { return r.slice(7, 9); }), old.length);
   }
+  });
 
   // Công việc: Giai đoạn, Công việc, Nhà, Người phụ trách, Hạn, Trạng thái (A:F, dòng 5), thay toàn bộ danh sách
+  step('Công việc', function () {
   if (d.cv) {
     const sh = sheet_(ss, 'Công việc');
     const old = readBlock_(sh, 5, 6);
-    const rows = d.cv.map(function (r) { return [r[0], r[1], r[2], r[3], toDate_(r[4]), r[5]]; });
+    const label = {};
+    old.forEach(function (r) { if (r[2] !== '') label[r[1]] = r[2]; });
+    const rows = d.cv.map(function (r) { return [r[0], r[1], label[r[1]] || r[2], r[3], toDate_(r[4]), r[5]]; });
     writeBlock_(sh, 5, 1, 6, rows, old.length);
   }
+  });
 
   // Hóa đơn (A:L, dòng 2)
+  step('Hóa đơn', function () {
   if (d.hd) {
     const sh = sheet_(ss, 'Hóa đơn');
     const rows = d.hd.map(function (r) { return [r[0], r[1], r[2], toDate_(r[3]), r[4], num_(r[5]), num_(r[6]), num_(r[7]), num_(r[8]), toDate_(r[9]), r[10], r[11]]; });
     const old = readBlock_(sh, 2, 12);
     writeBlock_(sh, 2, 1, 12, mergeByKey_(old, 0, nha, rows), old.length);
   }
+  });
 
-  // Giả định: cột của nhà này + cài đặt nhắc việc
+  // Giả định: cột của nhà này (tự thêm cột nếu là nhà mới) + cài đặt nhắc việc
+  step('Giả định', function () {
   if (d.gd) {
     const sh = sheet_(ss, 'Giả định');
-    const a = sh.getRange(1, 1, 30, 1).getValues().map(function (r) { return String(r[0]); });
-    const head = sh.getRange(1, 1, 6, 6).getValues();
-    let col = 0;
-    head.forEach(function (r) { r.forEach(function (c, i) { if (i > 0 && String(c) === nha && !col) col = i + 1; }); });
-    const set = function (label, c, v) { const i = a.indexOf(label); if (i >= 0 && c) sh.getRange(i + 1, c).setValue(v); };
-    set('Số phòng', col, d.gd.sp);
-    set('Giá thuê trung bình mỗi phòng', col, d.gd.gia);
-    set('Tỷ lệ lấp đầy mục tiêu', col, d.gd.occ);
-    set('Tổng vốn đầu tư dự kiến', col, d.gd.von);
-    set('Tỷ lệ trích quỹ bảo trì', col, d.gd.mt);
-    set('Nhắc hợp đồng thuê sắp hết hạn trước', 2, d.gd.hd);
-    set('Nhắc công việc sắp đến hạn trước', 2, d.gd.cv);
-    set('Nhắc bảo trì sắp đến hạn trước', 2, d.gd.bt);
+    gdColNum = gdCol_(sh, nha);
+    const a = colA_(sh, 30);
+    const set = function (label, c, v) { const i = a.indexOf(label); if (i >= 0 && c && v !== undefined) sh.getRange(i + 1, c).setValue(v); };
+    set('Số phòng', gdColNum, d.gd.sp);
+    set('Giá thuê trung bình mỗi phòng', gdColNum, d.gd.gia);
+    set('Tỷ lệ lấp đầy mục tiêu', gdColNum, d.gd.occ);
+    set('Tổng vốn đầu tư dự kiến', gdColNum, d.gd.von);
+    set('Tỷ lệ trích quỹ bảo trì', gdColNum, d.gd.mt);
+    if (d.gd.hd !== undefined) {
+      set('Nhắc hợp đồng thuê sắp hết hạn trước', 2, d.gd.hd);
+      set('Nhắc công việc sắp đến hạn trước', 2, d.gd.cv);
+      set('Nhắc bảo trì sắp đến hạn trước', 2, d.gd.bt);
+    }
   }
+  });
 
-  // Dự toán: cột Dự toán của nhà này (theo tiêu đề nhà ở các dòng đầu)
+  // Dự toán: khối 3 cột của nhà này (tự thêm khối nếu là nhà mới)
+  step('Dự toán', function () {
   if (d.du) {
     const sh = sheet_(ss, 'Dự toán');
-    const a = sh.getRange(1, 1, 30, 1).getValues().map(function (r) { return String(r[0]); });
-    const head = sh.getRange(1, 1, 5, 8).getValues();
-    let col = 0;
-    head.forEach(function (r) { r.forEach(function (c, i) { if (i > 0 && String(c) === nha && !col) col = i + 1; }); });
+    const a = colA_(sh, 30);
+    const col = duCol_(sh, nha, gdColNum || gdCol_(sheet_(ss, 'Giả định'), nha));
     if (col) d.du.forEach(function (r) { const i = a.indexOf(r[0]); if (i >= 0) sh.getRange(i + 1, col).setValue(Number(r[1]) ? Number(r[1]) : ''); });
   }
+  });
 
-  // Thủ tục: cột Nhà 1 hoặc Nhà 2
+  // Thủ tục: cột theo tên nhà
+  step('Thủ tục', function () {
   if (d.th) {
     const sh = sheet_(ss, 'Thủ tục');
-    const a = sh.getRange(1, 1, 40, 1).getValues().map(function (r) { return String(r[0]); });
-    const col = nha === 'Nhà 2' ? 3 : 2;
+    const a = colA_(sh, 40);
+    const col = nameCol_(sh, nha, 2);
     d.th.forEach(function (r) { const i = a.indexOf(r[0]); if (i >= 0) sh.getRange(i + 1, col).setValue(r[1]); });
   }
+  });
 
-  // Thông số app: giữ cột của nhà khác, ghi cột của nhà này (C = Nhà 1, D = Nhà 2)
+  // Thông số app: giữ cột của nhà khác, ghi cột của nhà này
+  step('Thông số app', function () {
   if (d.pm) {
     const sh = sheet_(ss, 'Thông số app');
-    const col = nha === 'Nhà 2' ? 3 : 2; // chỉ số trong mảng 0..3
-    const old = readBlock_(sh, 2, 4);
+    const col = nameCol_(sh, nha, 3) - 1; // chỉ số trong mảng
+    const width = Math.max(4, sh.getLastColumn());
+    const old = readBlock_(sh, 2, width);
     const map = {}, order = [];
     old.forEach(function (r) { const k = r[0] + '|' + r[1]; map[k] = r; order.push(k); });
     d.pm.forEach(function (r) {
       const k = r[0] + '|' + r[1];
-      if (!map[k]) { map[k] = [r[0], r[1], '', '']; order.push(k); }
+      if (!map[k]) { map[k] = []; for (let i = 0; i < width; i++) map[k].push(''); map[k][0] = r[0]; map[k][1] = r[1]; order.push(k); }
       map[k][col] = r[2];
     });
-    writeBlock_(sh, 2, 1, 4, order.map(function (k) { return map[k]; }), old.length);
+    writeBlock_(sh, 2, 1, width, order.map(function (k) { return map[k]; }), old.length);
   }
+  });
+  return errs;
 }
 
 /* ---------- lưu file gốc vào Drive ---------- */
@@ -1145,25 +1303,28 @@ function syncDoc_(d) {
     const hr = t.getRow(0);
     for (let c = 0; c < hr.getNumCells(); c++) hr.getCell(c).editAsText().setBold(true);
   };
+  const houses = [d.nha].concat(Object.keys(d.others || {}));
+  const of = function (h) { return h === d.nha ? d : d.others[h]; };
+  const all = function (k) { return houses.reduce(function (acc, h) { return acc.concat(of(h)[k] || []); }, []); };
 
-  if (d.gd) {
-    table('Giả định chung', ['Chỉ tiêu', 'Giá trị'], [
-      ['Số phòng', d.gd.sp], ['Giá thuê trung bình mỗi phòng (đ/tháng)', money_(d.gd.gia)],
-      ['Tỷ lệ lấp đầy mục tiêu', Math.round(d.gd.occ * 1000) / 10 + '%'], ['Tổng vốn đầu tư dự kiến (đ)', money_(d.gd.von)],
-      ['Quỹ bảo trì nên trích (% doanh thu)', Math.round(d.gd.mt * 10000) / 100 + '%']
-    ]);
-  }
+  table('Giả định theo nhà', ['Nhà', 'Số phòng', 'Giá thuê trung bình (đ/tháng)', 'Tỷ lệ lấp đầy mục tiêu', 'Tổng vốn dự kiến (đ)', 'Quỹ bảo trì (% doanh thu)'],
+    houses.filter(function (h) { return of(h).gd; }).map(function (h) {
+      const g = of(h).gd;
+      return [h, g.sp, money_(g.gia), Math.round(g.occ * 1000) / 10 + '%', g.von !== undefined ? money_(g.von) : '', g.mt !== undefined ? Math.round(g.mt * 10000) / 100 + '%' : ''];
+    }));
   table('Phòng và khách thuê', ['Nhà', 'Phòng', 'Khách thuê', 'Điện thoại', 'Giá thuê (đ)', 'Tiền cọc (đ)', 'Ngày bắt đầu', 'Ngày hết hạn'],
-    (d.rm || []).map(function (r) { return [r[0], r[1], r[2], r[3], money_(r[4]), money_(r[5]), r[6], r[7]]; }));
+    all('rm').map(function (r) { return [r[0], r[1], r[2], r[3], money_(r[4]), money_(r[5]), r[6], r[7]]; }));
   table('Sổ thu chi', ['Ngày', 'Nhà', 'Loại', 'Hạng mục', 'Số tiền (đ)', 'Ghi chú'],
-    (d.tc || []).map(function (r) { return [r[0], r[1], r[2], r[3], money_(r[4]), r[5]]; }), 'Sổ chưa có khoản nào.');
+    all('tc').map(function (r) { return [r[0], r[1], r[2], r[3], money_(r[4]), r[5]]; }), 'Sổ chưa có khoản nào.');
   table('Hóa đơn điện nước', ['Nhà', 'Loại', 'Số HĐ', 'Ngày lập', 'Kỳ', 'Chỉ số cũ', 'Chỉ số mới', 'Sản lượng', 'Thành tiền (đ)', 'Hạn thanh toán', 'Thanh toán', 'Nguồn'],
-    (d.hd || []).map(function (r) { return [r[0], r[1], r[2], r[3], r[4], r[5], r[6], r[7], money_(r[8]), r[9], r[10], r[11]]; }), 'Chưa có hóa đơn nào.');
+    all('hd').map(function (r) { return [r[0], r[1], r[2], r[3], r[4], r[5], r[6], r[7], money_(r[8]), r[9], r[10], r[11]]; }), 'Chưa có hóa đơn nào.');
   table('Bảo trì định kỳ', ['Nhà', 'Hạng mục', 'Chu kỳ (ngày)', 'Lần làm gần nhất', 'Chi phí (đ)', 'Khu vực'],
-    (d.bt || []).map(function (r) { return [r[0], r[1], r[2], r[3], money_(r[7]), r[8]]; }));
+    all('bt').map(function (r) { return [r[0], r[1], r[2], r[3], money_(r[7]), r[8]]; }));
   table('Công việc dự án', ['Giai đoạn', 'Công việc', 'Nhà', 'Người phụ trách', 'Hạn', 'Trạng thái'], d.cv || []);
-  table('Dự toán đầu tư (đồng)', ['Hạng mục', 'Dự toán'], (d.du || []).map(function (r) { return [r[0], money_(r[1])]; }));
-  table('Thủ tục', ['Thủ tục', 'Trạng thái'], d.th || []);
+  table('Dự toán đầu tư (đồng)', ['Nhà', 'Hạng mục', 'Dự toán'],
+    houses.reduce(function (acc, h) { return acc.concat((of(h).du || []).map(function (r) { return [h, r[0], money_(r[1])]; })); }, []));
+  table('Thủ tục', ['Nhà', 'Thủ tục', 'Trạng thái'],
+    houses.reduce(function (acc, h) { return acc.concat((of(h).th || []).map(function (r) { return [h, r[0], r[1]]; })); }, []));
   doc.saveAndClose();
 }
 </script>
